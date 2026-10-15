@@ -1,0 +1,44 @@
+﻿# Binaires et exécutables
+*.exe
+*.dll
+*.so
+server
+
+# Données PostgreSQL locales
+/postgres_data/
+/data/
+*.sql.gz
+*.backup
+*.dump
+
+# Environnement et secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+secrets/
+
+# Dépendances et builds
+node_modules/
+dist/
+build/
+bin/
+obj/
+vendor/
+
+# Caches et logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.cache/
+
+# Fichiers système et éditeurs
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
