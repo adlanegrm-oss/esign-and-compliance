@@ -234,19 +234,51 @@
 
             <!-- ESPACE 2 : SIGNATURE AVEC DECLENCHEMENT REST REEL -->
                     <!-- Espace 1 : Espace Client Adhérent (DGI Maroc / DGFiP France) -->
-        <div id="clientView" class="session-view card" style="display: none; padding: 25px; margin: 20px auto; max-width: 900px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <!-- Espace 1 : Espace Client Adhérent (Conforme Spécifications) -->
+        <div id="clientView" class="session-view card" style="display: none; padding: 25px; margin: 20px auto; max-width: 1000px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
-                <h2 style="margin: 0; color: #1e293b; font-size: 1.4rem;">🏛️ Espace Client Adhérent &amp; Conformité Fiscale</h2>
+                <div>
+                    <h2 style="margin: 0; color: #1e293b; font-size: 1.4rem;">🏛️ Einvoice Compliance and Care</h2>
+                    <small style="color: #64748b;">Vérification de la conformité de vos factures électroniques (France, Europe &amp; Maroc)</small>
+                </div>
                 <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="background: #64748b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">&larr; Retour Accueil</button>
             </div>
-            <p style="color: #475569; font-size: 0.95rem;">Contrôle réglementaire et e-reporting multi-juridictionnel en temps réel via l'API Go REST.</p>
-            
-            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-                <button onclick="lancerControleDGI()" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">🇲🇦 Contrôle DGI Maroc (ICE/IF)</button>
-                <button onclick="lancerControleDGFIP()" style="background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">🇫🇷 Contrôle DGFiP France (EN 16931)</button>
+
+            <!-- Grille des actions client -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; margin-bottom: 25px;">
+                <!-- Module 1: Déposer un lot -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; background: #f8fafc;">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a;">📤 Déposer un lot de factures</h3>
+                    <p style="font-size: 0.85rem; color: #475569;">Téléversez jusqu'à 100 documents (PDF, Factur-X, XML, UBL).</p>
+                    <input type="file" id="batchFileInput" multiple style="font-size: 0.8rem; margin-bottom: 10px; width: 100%;">
+                    <button onclick="lancerControleDGI()" style="background: #2563eb; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: 500;">Analyser le lot (Rapport Excel)</button>
+                </div>
+
+                <!-- Module 2: E-reporting & Archives -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; background: #f8fafc;">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a;">📊 E-reporting &amp; Archives</h3>
+                    <p style="font-size: 0.85rem; color: #475569;">Consultez les lots archivés et préparez les flux de déclaration.</p>
+                    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                        <input type="date" id="archiveDateDebut" style="font-size: 0.8rem; padding: 4px;">
+                        <input type="date" id="archiveDateFin" style="font-size: 0.8rem; padding: 4px;">
+                    </div>
+                    <button onclick="lancerControleDGFIP()" style="background: #0284c7; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: 500;">Filtrer Archives &amp; E-reporting</button>
+                </div>
+
+                <!-- Module 3: Téléchargement & Audit -->
+                <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; background: #f8fafc;">
+                    <h3 style="margin-top: 0; font-size: 1.05rem; color: #0f172a;">📦 Factures Conformes &amp; Audit</h3>
+                    <p style="font-size: 0.85rem; color: #475569;">Téléchargez les lots validés et exportez l'historique d'audit.</p>
+                    <div style="display: flex; gap: 8px;">
+                        <a href="/Lot_Factures_Signees_PAdES.zip" download style="display: block; text-align: center; text-decoration: none; background: #16a34a; color: white; padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; flex: 1;">Télécharger ZIP</a>
+                        <button onclick="telechargerRapportCSV()" style="background: #475569; color: white; border: none; padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; cursor: pointer; flex: 1;">Export CSV Audit</button>
+                    </div>
+                </div>
             </div>
 
-            <div id="clientOutput" style="background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 6px; font-family: Consolas, monospace; font-size: 0.85rem; min-height: 80px; white-space: pre-wrap; overflow-x: auto;">En attente de déclenchement d'un contrôle fiscal...</div>
+            <!-- Console de résultats d'analyse -->
+            <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; color: #334155;">Résultats d'analyse &amp; Observations :</h4>
+            <div id="clientOutput" style="background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 6px; font-family: Consolas, monospace; font-size: 0.85rem; min-height: 100px; white-space: pre-wrap; overflow-x: auto;">En attente de traitement d'un lot...</div>
         </div>
         <div id="signatureView" class="session-view">
                 <div class="rubrique-panel" style="border-left: 6px solid var(--signature-purple);">
