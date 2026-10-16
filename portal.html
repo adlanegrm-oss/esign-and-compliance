@@ -233,7 +233,22 @@
             </div>
 
             <!-- ESPACE 2 : SIGNATURE AVEC DECLENCHEMENT REST REEL -->
-            <div id="signatureView" class="session-view">
+                    <!-- Espace 1 : Espace Client Adhérent (DGI Maroc / DGFiP France) -->
+        <div id="clientView" class="session-view card" style="display: none; padding: 25px; margin: 20px auto; max-width: 900px; background: #fff; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 20px;">
+                <h2 style="margin: 0; color: #1e293b; font-size: 1.4rem;">🏛️ Espace Client Adhérent &amp; Conformité Fiscale</h2>
+                <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="background: #64748b; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer;">&larr; Retour Accueil</button>
+            </div>
+            <p style="color: #475569; font-size: 0.95rem;">Contrôle réglementaire et e-reporting multi-juridictionnel en temps réel via l'API Go REST.</p>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <button onclick="lancerControleDGI()" style="background: #2563eb; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">🇲🇦 Contrôle DGI Maroc (ICE/IF)</button>
+                <button onclick="lancerControleDGFIP()" style="background: #0284c7; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">🇫🇷 Contrôle DGFiP France (EN 16931)</button>
+            </div>
+
+            <div id="clientOutput" style="background: #0f172a; color: #38bdf8; padding: 15px; border-radius: 6px; font-family: Consolas, monospace; font-size: 0.85rem; min-height: 80px; white-space: pre-wrap; overflow-x: auto;">En attente de déclenchement d'un contrôle fiscal...</div>
+        </div>
+        <div id="signatureView" class="session-view">
                 <div class="rubrique-panel" style="border-left: 6px solid var(--signature-purple);">
                     <div class="rubrique-header">
                         <h2 class="rubrique-title">&#128272; Déclenchement Asynchrone REST PAdES (POST /api/v1/pades/sign-batch)</h2>
