@@ -388,6 +388,62 @@
         function deconnecterSession() {
             location.reload();
         }
+    
+        // Fonctions d'appel API pour l'Espace Client Adhérent
+        async function lancerControleDGI() {
+            const out = document.getElementById('clientOutput');
+            out.textContent = "Exécution du contrôle DGI Maroc (ICE/IF)...";
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const res = await fetch('http://localhost:8080/api/v1/compliance/dgi-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        juridiction: "MA",
+                        ice: "001234567890123",
+                        identifiant_fiscal: "40128934",
+                        type_flux: "FACTURE_VENTE",
+                        montant_ht: 35000.00,
+                        montant_tva: 7000.00,
+                        montant_ttc: 42000.00
+                    })
+                });
+                const data = await res.json();
+                out.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                out.textContent = "Erreur appel DGI : " + err.message;
+            }
+        }
+
+        async function lancerControleDGFIP() {
+            const out = document.getElementById('clientOutput');
+            out.textContent = "Exécution du contrôle DGFiP France (EN 16931 / Factur-X)...";
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const res = await fetch('http://localhost:8080/api/v1/compliance/dgi-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        juridiction: "FR",
+                        siren_emetteur: "732829320",
+                        siret_recepteur: "13002526500013",
+                        norme: "EN 16931",
+                        profil: "FACTUR-X EXTENDED",
+                        e_reporting: true
+                    })
+                });
+                const data = await res.json();
+                out.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                out.textContent = "Erreur appel DGFiP : " + err.message;
+            }
+        }
     </script>
 </body>
 </html>
