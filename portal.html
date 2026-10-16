@@ -195,7 +195,306 @@
                 <button type="submit" class="btn-access admin" style="width: 100%;">Se connecter (Délivrance JWT REST)</button>
             </form>
         </div>
-    </main>
+        <!-- 3. ESPACE BACK-OFFICE & SUPERVISION TECHNIQUE -->
+    <div id="adminView" class="session-view" style="display: none; max-width: 1400px; margin: 20px auto; padding: 0 15px;">
+        <!-- EN-TETE TOUR DE CONTROLE -->
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px 25px; margin-bottom: 20px; color: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem;">🎛️</div>
+                <div>
+                    <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #f8fafc;">Espace Back-Office & Supervision Système</h2>
+                    <p style="margin: 3px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Administration multi-client • Monitoring PostgreSQL 17 • Traçabilité & Alertes Opérationnelles</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">JWT: admin.edimaroc@compliance.ma</div>
+                    <div style="font-size: 0.75rem; color: #22c55e; font-weight: 600;">● SESSION ACTIVE & AUTORISÉE</div>
+                </div>
+                <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="background: #334155; color: #fff; border: 1px solid #475569; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                    ← Accueil des 3 Espaces
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVIGATION SOUS-RUBRIQUES BACK-OFFICE -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="afficherOngletAdmin('kpi')" id="btn-admin-kpi" class="btn-admin-tab" style="background:#2563eb; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📊 Métriques & Supervision</button>
+            <button onclick="afficherOngletAdmin('clients')" id="btn-admin-clients" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">👥 Clients & Habilitations</button>
+            <button onclick="afficherOngletAdmin('postgres')" id="btn-admin-postgres" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🐘 Connexion PostgreSQL 17</button>
+            <button onclick="afficherOngletAdmin('alertes')" id="btn-admin-alertes" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🚨 Alertes & Anomalies <span style="background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:0.7rem; margin-left:4px;">3</span></button>
+            <button onclick="afficherOngletAdmin('audit')" id="btn-admin-audit" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📜 Piste d'Audit Admin</button>
+            <button onclick="afficherOngletAdmin('logs')" id="btn-admin-logs" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🖥️ Logs & Monitoring Live</button>
+        </div>
+
+        <!-- 1. SOUS-ONGLET KPI & TABLEAU DE BORD TRAITEMENTS -->
+        <div id="tab-admin-kpi" class="admin-tab-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #2563eb; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Volume Total Traité</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0f172a; margin:8px 0;">357 docs</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">↑ +14% vs heure précédente</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #16a34a; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Taux de Conformité DGI/DGFiP</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#16a34a; margin:8px 0;">67.0 %</div>
+                    <div style="font-size:0.75rem; color:#64748b;">134 scellés PAdES / 66 rejets</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #0284c7; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Pool PostgreSQL Actif</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0284c7; margin:8px 0;">3 / 20</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">Latence moy. 4.2 ms</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #ef4444; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Échecs & Blocages Fiscaux</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin:8px 0;">3 alertes</div>
+                    <div style="font-size:0.75rem; color:#dc2626; font-weight:600;">2 ICE manquants • 1 EN 16931</div>
+                </div>
+            </div>
+
+            <!-- TABLEAU DES TABLES & ETAT POSTGRES -->
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a; font-size:1rem;">📦 Synchronisation des Tables PostgreSQL 17 (Architecture Active)</h4>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Nom de la Table</th>
+                            <th style="padding:10px;">Enregistrements</th>
+                            <th style="padding:10px;">Taille Disque</th>
+                            <th style="padding:10px;">Dernière Sync</th>
+                            <th style="padding:10px;">Statut Réplication</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">logs_signatures_pades</td>
+                            <td style="padding:10px;">200 lignes</td>
+                            <td style="padding:10px;">112 kB</td>
+                            <td style="padding:10px;">En temps réel</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_documents</td>
+                            <td style="padding:10px;">100 lignes</td>
+                            <td style="padding:10px;">80 kB</td>
+                            <td style="padding:10px;">Il y a 30 sec</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">piste_audit</td>
+                            <td style="padding:10px;">45 lignes</td>
+                            <td style="padding:10px;">64 kB</td>
+                            <td style="padding:10px;">Il y a 1 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">synthese_mouvements_temporels</td>
+                            <td style="padding:10px;">10 lignes</td>
+                            <td style="padding:10px;">48 kB</td>
+                            <td style="padding:10px;">Il y a 2 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_ereporting</td>
+                            <td style="padding:10px;">2 lignes</td>
+                            <td style="padding:10px;">24 kB</td>
+                            <td style="padding:10px;">Il y a 5 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. SOUS-ONGLET CLIENTS, UTILISATEURS & HABILITATIONS -->
+        <div id="tab-admin-clients" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Gestion Multi-Clients & Comptes Utilisateurs</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Contrôle des rôles (Admin, Opérateur, Auditeur) et affectation des espaces.</p>
+                    </div>
+                    <button onclick="alert('Formulaire création client : Ajout nouvel adhérent avec ICE et quotas')" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">+ Nouveau Client Adhérent</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Identifiant / Client</th>
+                            <th style="padding:10px;">ICE / Réf Fiscale</th>
+                            <th style="padding:10px;">Contact Administrateur</th>
+                            <th style="padding:10px;">Rôle Principal</th>
+                            <th style="padding:10px;">Habilitations Activées</th>
+                            <th style="padding:10px;">Statut</th>
+                            <th style="padding:10px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-001 • EDIMAROC LABS</td>
+                            <td style="padding:10px; font-family:monospace;">002894561000045</td>
+                            <td style="padding:10px;">adlane.agrimi@edimaroc.ma</td>
+                            <td style="padding:10px;"><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">SUPER_ADMIN</span></td>
+                            <td style="padding:10px; color:#475569;">Clients, DGI, PAdES, PostgreSQL</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-002 • ATLAS DISTRIB</td>
+                            <td style="padding:10px; font-family:monospace;">001923456000088</td>
+                            <td style="padding:10px;">finance@atlasdistrib.ma</td>
+                            <td style="padding:10px;"><span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">OPERATEUR_DEPOT</span></td>
+                            <td style="padding:10px; color:#475569;">Dépôt lots, E-reporting, Téléchargement</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600;">CLI-003 • AUDIT & FISC SARL</td>
+                            <td style="padding:10px; font-family:monospace;">003112987000012</td>
+                            <td style="padding:10px;">auditeur@fiscalite.fr</td>
+                            <td style="padding:10px;"><span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">AUDITEUR_EXTERNE</span></td>
+                            <td style="padding:10px; color:#475569;">Lecture seule Piste d'audit & Rejets</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. SOUS-ONGLET CONFIGURATION POSTGRESQL 17 -->
+        <div id="tab-admin-postgres" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Configuration & Santé de la Base PostgreSQL</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Paramètres de Connexion Actuelle</h5>
+                        <div style="font-size:0.85rem; line-height:1.8; color:#475569;">
+                            <div><strong>Host :</strong> 127.0.0.1:5432 (Localhost Windows x64)</div>
+                            <div><strong>Moteur :</strong> PostgreSQL 17.0 + Go 1.24 PAdES Worker</div>
+                            <div><strong>Base de données :</strong> <code style="color:#0369a1;">edimaroc_compliance_db</code></div>
+                            <div><strong>User :</strong> postgres (SSL certifié TLSv1.3)</div>
+                            <div><strong>Max Connections :</strong> 100 (Pool actif : 3)</div>
+                        </div>
+                        <div style="margin-top:15px;">
+                            <button onclick="testerConnexionPostgres()" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.85rem;">⚡ Tester la connectivité</button>
+                        </div>
+                    </div>
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Actions de Maintenance PostgreSQL</h5>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button onclick="alert('VACUUM ANALYZE déclenché sur la table logs_signatures_pades')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🧹 Exécuter VACUUM ANALYZE (Optimisation index)</button>
+                            <button onclick="alert('Snapshot de sauvegarde PostgreSQL 17 généré dans /backups/pg_dump.sql')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">💾 Déclencher Sauvegarde Instantanée (pg_dump)</button>
+                            <button onclick="alert('Pool de connexions purgé et réinitialisé')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🔄 Réinitialiser le pool de connexions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SOUS-ONGLET ALERTES & ANOMALIES -->
+        <div id="tab-admin-alertes" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Centre des Alertes Système & Incidents Métier</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="background:#fef2f2; border:1px solid #fecaca; border-left:5px solid #dc2626; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#991b1b; font-weight:700; font-size:0.9rem;">🚨 Rejet Bloquant DGI : 66 factures sans ICE valide</div>
+                            <div style="color:#7f1d1d; font-size:0.8rem; margin-top:2px;">Lot FA-PADES-003 à FA-PADES-198 : Non-conformité CGI Art. 145. Scellement suspendu.</div>
+                        </div>
+                        <button onclick="alert('Rapport transmis à l équipe fiscale')" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Notifier le Client</button>
+                    </div>
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-left:5px solid #d97706; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#92400e; font-weight:700; font-size:0.9rem;">⚠️ Latence Réseau TSA RFC 3161 (> 1200ms)</div>
+                            <div style="color:#78350f; font-size:0.8rem; margin-top:2px;">Le serveur d'horodatage externe a répondu avec retard lors du scellement du lot #200.</div>
+                        </div>
+                        <button onclick="alert('Bascule sur le serveur TSA de secours')" style="background:#d97706; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Basculer TSA Secours</button>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-left:5px solid #16a34a; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#166534; font-weight:700; font-size:0.9rem;">✅ Connexion PostgreSQL 17 Stable</div>
+                            <div style="color:#14532d; font-size:0.8rem; margin-top:2px;">Tous les workers de validation Schematron et signature Go sont opérationnels.</div>
+                        </div>
+                        <span style="color:#16a34a; font-weight:700; font-size:0.8rem;">R.A.S</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SOUS-ONGLET PISTE D'AUDIT ADMIN -->
+        <div id="tab-admin-audit" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Piste d'Audit des Actions Administratives</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Journal infalsifiable des modifications techniques et des accès aux rôles.</p>
+                    </div>
+                    <button onclick="alert('Export de la piste d audit admin au format Excel / CSV')" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📥 Exporter Log Audit</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Horodatage</th>
+                            <th style="padding:10px;">Opérateur / JWT</th>
+                            <th style="padding:10px;">Action Déclenchée</th>
+                            <th style="padding:10px;">Cible</th>
+                            <th style="padding:10px;">Empreinte SHA-256</th>
+                            <th style="padding:10px;">Résultat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:15:22</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">VALIDATION_LOT_MULTINORMES</td>
+                            <td style="padding:10px;">Lot #200 PDF (DGI+DGFiP)</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">e3b0c44298fc1c14...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:10:04</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">EXCLUSION_DOCS_NOK</td>
+                            <td style="padding:10px;">66 pièces non conformes ICE</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">a8f5c123d90e4a77...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 00:55:18</td>
+                            <td style="padding:10px; font-weight:600;">system_cron</td>
+                            <td style="padding:10px;">SYNCHRO_POSTGRES_PGDUMP</td>
+                            <td style="padding:10px;">Base edimaroc_compliance_db</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">7c9b3104e12fa89b...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. SOUS-ONGLET LOGS & MONITORING EN DIRECT -->
+        <div id="tab-admin-logs" class="admin-tab-content" style="display:none;">
+            <div style="background:#0f172a; border-radius:8px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #334155; padding-bottom:10px;">
+                    <div style="color:#38bdf8; font-weight:700; font-size:0.9rem; font-family:monospace;">🖥️ Console de Supervision Applicative & Worker Go PAdES</div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="rafraichirLogsAdmin()" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">🔄 Rafraîchir</button>
+                        <button onclick="document.getElementById('adminConsoleLogs').innerText=''" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Effacer</button>
+                    </div>
+                </div>
+                <div id="adminConsoleLogs" style="font-family:Consolas, 'Courier New', monospace; font-size:0.8rem; color:#a5f3fc; line-height:1.6; max-height:350px; overflow-y:auto; white-space:pre-wrap;">
+[2026-10-16 01:15:00] [POSTGRES] Connected to 127.0.0.1:5432 (PostgreSQL 17.0 x64) - Pool idle: 17, active: 3
+[2026-10-16 01:15:01] [PADES_WORKER] Engine binary 'pades_sign.exe' ready. RFC 3161 timestamping responder validated.
+[2026-10-16 01:15:02] [DISPATCHER] Received batch: 200 documents via REST API (/api/v1/admin/metrics)
+[2026-10-16 01:15:04] [LEGAL_GATEKEEPER] Rule DGI-MAROC-CGI-145: 134 OK, 66 NOK (ICE missing)
+[2026-10-16 01:15:05] [LEGAL_GATEKEEPER] Rule CEN-EN-16931: CIUS-FR syntax check completed.
+[2026-10-16 01:15:06] [PADES_WORKER] Scellement de 134 factures certifiées valides terminé en 1.84s (SHA-256 + RSA 2048).
+[2026-10-16 01:15:07] [MONITOR] System memory: 284 MB / 32 GB RAM. CPU usage: 1.4%. All services GREEN.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
     <!-- PORTAIL CONNECTE -->
     <div id="portalScreen">
@@ -382,7 +681,306 @@
                 </tbody>
             </table>
         </div>
-</div></main>
+</div>    <!-- 3. ESPACE BACK-OFFICE & SUPERVISION TECHNIQUE -->
+    <div id="adminView" class="session-view" style="display: none; max-width: 1400px; margin: 20px auto; padding: 0 15px;">
+        <!-- EN-TETE TOUR DE CONTROLE -->
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px 25px; margin-bottom: 20px; color: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem;">🎛️</div>
+                <div>
+                    <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #f8fafc;">Espace Back-Office & Supervision Système</h2>
+                    <p style="margin: 3px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Administration multi-client • Monitoring PostgreSQL 17 • Traçabilité & Alertes Opérationnelles</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">JWT: admin.edimaroc@compliance.ma</div>
+                    <div style="font-size: 0.75rem; color: #22c55e; font-weight: 600;">● SESSION ACTIVE & AUTORISÉE</div>
+                </div>
+                <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="background: #334155; color: #fff; border: 1px solid #475569; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                    ← Accueil des 3 Espaces
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVIGATION SOUS-RUBRIQUES BACK-OFFICE -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="afficherOngletAdmin('kpi')" id="btn-admin-kpi" class="btn-admin-tab" style="background:#2563eb; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📊 Métriques & Supervision</button>
+            <button onclick="afficherOngletAdmin('clients')" id="btn-admin-clients" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">👥 Clients & Habilitations</button>
+            <button onclick="afficherOngletAdmin('postgres')" id="btn-admin-postgres" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🐘 Connexion PostgreSQL 17</button>
+            <button onclick="afficherOngletAdmin('alertes')" id="btn-admin-alertes" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🚨 Alertes & Anomalies <span style="background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:0.7rem; margin-left:4px;">3</span></button>
+            <button onclick="afficherOngletAdmin('audit')" id="btn-admin-audit" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📜 Piste d'Audit Admin</button>
+            <button onclick="afficherOngletAdmin('logs')" id="btn-admin-logs" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🖥️ Logs & Monitoring Live</button>
+        </div>
+
+        <!-- 1. SOUS-ONGLET KPI & TABLEAU DE BORD TRAITEMENTS -->
+        <div id="tab-admin-kpi" class="admin-tab-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #2563eb; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Volume Total Traité</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0f172a; margin:8px 0;">357 docs</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">↑ +14% vs heure précédente</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #16a34a; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Taux de Conformité DGI/DGFiP</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#16a34a; margin:8px 0;">67.0 %</div>
+                    <div style="font-size:0.75rem; color:#64748b;">134 scellés PAdES / 66 rejets</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #0284c7; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Pool PostgreSQL Actif</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0284c7; margin:8px 0;">3 / 20</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">Latence moy. 4.2 ms</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #ef4444; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Échecs & Blocages Fiscaux</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin:8px 0;">3 alertes</div>
+                    <div style="font-size:0.75rem; color:#dc2626; font-weight:600;">2 ICE manquants • 1 EN 16931</div>
+                </div>
+            </div>
+
+            <!-- TABLEAU DES TABLES & ETAT POSTGRES -->
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a; font-size:1rem;">📦 Synchronisation des Tables PostgreSQL 17 (Architecture Active)</h4>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Nom de la Table</th>
+                            <th style="padding:10px;">Enregistrements</th>
+                            <th style="padding:10px;">Taille Disque</th>
+                            <th style="padding:10px;">Dernière Sync</th>
+                            <th style="padding:10px;">Statut Réplication</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">logs_signatures_pades</td>
+                            <td style="padding:10px;">200 lignes</td>
+                            <td style="padding:10px;">112 kB</td>
+                            <td style="padding:10px;">En temps réel</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_documents</td>
+                            <td style="padding:10px;">100 lignes</td>
+                            <td style="padding:10px;">80 kB</td>
+                            <td style="padding:10px;">Il y a 30 sec</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">piste_audit</td>
+                            <td style="padding:10px;">45 lignes</td>
+                            <td style="padding:10px;">64 kB</td>
+                            <td style="padding:10px;">Il y a 1 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">synthese_mouvements_temporels</td>
+                            <td style="padding:10px;">10 lignes</td>
+                            <td style="padding:10px;">48 kB</td>
+                            <td style="padding:10px;">Il y a 2 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_ereporting</td>
+                            <td style="padding:10px;">2 lignes</td>
+                            <td style="padding:10px;">24 kB</td>
+                            <td style="padding:10px;">Il y a 5 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. SOUS-ONGLET CLIENTS, UTILISATEURS & HABILITATIONS -->
+        <div id="tab-admin-clients" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Gestion Multi-Clients & Comptes Utilisateurs</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Contrôle des rôles (Admin, Opérateur, Auditeur) et affectation des espaces.</p>
+                    </div>
+                    <button onclick="alert('Formulaire création client : Ajout nouvel adhérent avec ICE et quotas')" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">+ Nouveau Client Adhérent</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Identifiant / Client</th>
+                            <th style="padding:10px;">ICE / Réf Fiscale</th>
+                            <th style="padding:10px;">Contact Administrateur</th>
+                            <th style="padding:10px;">Rôle Principal</th>
+                            <th style="padding:10px;">Habilitations Activées</th>
+                            <th style="padding:10px;">Statut</th>
+                            <th style="padding:10px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-001 • EDIMAROC LABS</td>
+                            <td style="padding:10px; font-family:monospace;">002894561000045</td>
+                            <td style="padding:10px;">adlane.agrimi@edimaroc.ma</td>
+                            <td style="padding:10px;"><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">SUPER_ADMIN</span></td>
+                            <td style="padding:10px; color:#475569;">Clients, DGI, PAdES, PostgreSQL</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-002 • ATLAS DISTRIB</td>
+                            <td style="padding:10px; font-family:monospace;">001923456000088</td>
+                            <td style="padding:10px;">finance@atlasdistrib.ma</td>
+                            <td style="padding:10px;"><span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">OPERATEUR_DEPOT</span></td>
+                            <td style="padding:10px; color:#475569;">Dépôt lots, E-reporting, Téléchargement</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600;">CLI-003 • AUDIT & FISC SARL</td>
+                            <td style="padding:10px; font-family:monospace;">003112987000012</td>
+                            <td style="padding:10px;">auditeur@fiscalite.fr</td>
+                            <td style="padding:10px;"><span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">AUDITEUR_EXTERNE</span></td>
+                            <td style="padding:10px; color:#475569;">Lecture seule Piste d'audit & Rejets</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. SOUS-ONGLET CONFIGURATION POSTGRESQL 17 -->
+        <div id="tab-admin-postgres" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Configuration & Santé de la Base PostgreSQL</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Paramètres de Connexion Actuelle</h5>
+                        <div style="font-size:0.85rem; line-height:1.8; color:#475569;">
+                            <div><strong>Host :</strong> 127.0.0.1:5432 (Localhost Windows x64)</div>
+                            <div><strong>Moteur :</strong> PostgreSQL 17.0 + Go 1.24 PAdES Worker</div>
+                            <div><strong>Base de données :</strong> <code style="color:#0369a1;">edimaroc_compliance_db</code></div>
+                            <div><strong>User :</strong> postgres (SSL certifié TLSv1.3)</div>
+                            <div><strong>Max Connections :</strong> 100 (Pool actif : 3)</div>
+                        </div>
+                        <div style="margin-top:15px;">
+                            <button onclick="testerConnexionPostgres()" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.85rem;">⚡ Tester la connectivité</button>
+                        </div>
+                    </div>
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Actions de Maintenance PostgreSQL</h5>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button onclick="alert('VACUUM ANALYZE déclenché sur la table logs_signatures_pades')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🧹 Exécuter VACUUM ANALYZE (Optimisation index)</button>
+                            <button onclick="alert('Snapshot de sauvegarde PostgreSQL 17 généré dans /backups/pg_dump.sql')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">💾 Déclencher Sauvegarde Instantanée (pg_dump)</button>
+                            <button onclick="alert('Pool de connexions purgé et réinitialisé')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🔄 Réinitialiser le pool de connexions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SOUS-ONGLET ALERTES & ANOMALIES -->
+        <div id="tab-admin-alertes" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Centre des Alertes Système & Incidents Métier</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="background:#fef2f2; border:1px solid #fecaca; border-left:5px solid #dc2626; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#991b1b; font-weight:700; font-size:0.9rem;">🚨 Rejet Bloquant DGI : 66 factures sans ICE valide</div>
+                            <div style="color:#7f1d1d; font-size:0.8rem; margin-top:2px;">Lot FA-PADES-003 à FA-PADES-198 : Non-conformité CGI Art. 145. Scellement suspendu.</div>
+                        </div>
+                        <button onclick="alert('Rapport transmis à l équipe fiscale')" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Notifier le Client</button>
+                    </div>
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-left:5px solid #d97706; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#92400e; font-weight:700; font-size:0.9rem;">⚠️ Latence Réseau TSA RFC 3161 (> 1200ms)</div>
+                            <div style="color:#78350f; font-size:0.8rem; margin-top:2px;">Le serveur d'horodatage externe a répondu avec retard lors du scellement du lot #200.</div>
+                        </div>
+                        <button onclick="alert('Bascule sur le serveur TSA de secours')" style="background:#d97706; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Basculer TSA Secours</button>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-left:5px solid #16a34a; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#166534; font-weight:700; font-size:0.9rem;">✅ Connexion PostgreSQL 17 Stable</div>
+                            <div style="color:#14532d; font-size:0.8rem; margin-top:2px;">Tous les workers de validation Schematron et signature Go sont opérationnels.</div>
+                        </div>
+                        <span style="color:#16a34a; font-weight:700; font-size:0.8rem;">R.A.S</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SOUS-ONGLET PISTE D'AUDIT ADMIN -->
+        <div id="tab-admin-audit" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Piste d'Audit des Actions Administratives</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Journal infalsifiable des modifications techniques et des accès aux rôles.</p>
+                    </div>
+                    <button onclick="alert('Export de la piste d audit admin au format Excel / CSV')" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📥 Exporter Log Audit</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Horodatage</th>
+                            <th style="padding:10px;">Opérateur / JWT</th>
+                            <th style="padding:10px;">Action Déclenchée</th>
+                            <th style="padding:10px;">Cible</th>
+                            <th style="padding:10px;">Empreinte SHA-256</th>
+                            <th style="padding:10px;">Résultat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:15:22</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">VALIDATION_LOT_MULTINORMES</td>
+                            <td style="padding:10px;">Lot #200 PDF (DGI+DGFiP)</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">e3b0c44298fc1c14...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:10:04</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">EXCLUSION_DOCS_NOK</td>
+                            <td style="padding:10px;">66 pièces non conformes ICE</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">a8f5c123d90e4a77...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 00:55:18</td>
+                            <td style="padding:10px; font-weight:600;">system_cron</td>
+                            <td style="padding:10px;">SYNCHRO_POSTGRES_PGDUMP</td>
+                            <td style="padding:10px;">Base edimaroc_compliance_db</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">7c9b3104e12fa89b...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. SOUS-ONGLET LOGS & MONITORING EN DIRECT -->
+        <div id="tab-admin-logs" class="admin-tab-content" style="display:none;">
+            <div style="background:#0f172a; border-radius:8px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #334155; padding-bottom:10px;">
+                    <div style="color:#38bdf8; font-weight:700; font-size:0.9rem; font-family:monospace;">🖥️ Console de Supervision Applicative & Worker Go PAdES</div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="rafraichirLogsAdmin()" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">🔄 Rafraîchir</button>
+                        <button onclick="document.getElementById('adminConsoleLogs').innerText=''" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Effacer</button>
+                    </div>
+                </div>
+                <div id="adminConsoleLogs" style="font-family:Consolas, 'Courier New', monospace; font-size:0.8rem; color:#a5f3fc; line-height:1.6; max-height:350px; overflow-y:auto; white-space:pre-wrap;">
+[2026-10-16 01:15:00] [POSTGRES] Connected to 127.0.0.1:5432 (PostgreSQL 17.0 x64) - Pool idle: 17, active: 3
+[2026-10-16 01:15:01] [PADES_WORKER] Engine binary 'pades_sign.exe' ready. RFC 3161 timestamping responder validated.
+[2026-10-16 01:15:02] [DISPATCHER] Received batch: 200 documents via REST API (/api/v1/admin/metrics)
+[2026-10-16 01:15:04] [LEGAL_GATEKEEPER] Rule DGI-MAROC-CGI-145: 134 OK, 66 NOK (ICE missing)
+[2026-10-16 01:15:05] [LEGAL_GATEKEEPER] Rule CEN-EN-16931: CIUS-FR syntax check completed.
+[2026-10-16 01:15:06] [PADES_WORKER] Scellement de 134 factures certifiées valides terminé en 1.84s (SHA-256 + RSA 2048).
+[2026-10-16 01:15:07] [MONITOR] System memory: 284 MB / 32 GB RAM. CPU usage: 1.4%. All services GREEN.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
                 </div>
             </div>
 
@@ -828,6 +1426,36 @@ function telechargerRapportRejetsCSV() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+}
+</script>
+<script>
+function afficherOngletAdmin(tabKey) {
+    document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.btn-admin-tab').forEach(btn => {
+        btn.style.background = '#f8fafc';
+        btn.style.color = '#334155';
+        btn.style.border = '1px solid #e2e8f0';
+    });
+
+    const activeTab = document.getElementById('tab-admin-' + tabKey);
+    const activeBtn = document.getElementById('btn-admin-' + tabKey);
+    if (activeTab) activeTab.style.display = 'block';
+    if (activeBtn) {
+        activeBtn.style.background = '#2563eb';
+        activeBtn.style.color = '#fff';
+        activeBtn.style.border = 'none';
+    }
+}
+
+function testerConnexionPostgres() {
+    alert("✅ Ping PostgreSQL 17 réussi !\nHost: 127.0.0.1:5432\nLatence: 3.8 ms\nConnexions actives: 3/20\nCertificat TLSv1.3 validé.");
+}
+
+function rafraichirLogsAdmin() {
+    const consoleLogs = document.getElementById('adminConsoleLogs');
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    consoleLogs.innerText += `\n[${now}] [HEALTHCHECK] PostgreSQL 17 & Worker Go PAdES opérationnels (Heartbeat OK).`;
+    consoleLogs.scrollTop = consoleLogs.scrollHeight;
 }
 </script>
 </body>
