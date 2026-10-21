@@ -42,3 +42,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+Lot_Factures_Signees_PAdES.tar.gz
+Lot_Factures_Signees_PAdES.zip
+*.tar.gz
+*.zip
