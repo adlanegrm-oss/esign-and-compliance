@@ -46,3 +46,8 @@ Lot_Factures_Signees_PAdES.tar.gz
 Lot_Factures_Signees_PAdES.zip
 *.tar.gz
 *.zip
+security_backup_*/
+*.backup*
+*.pfx
+*.p12
+Lot_Factures_*
