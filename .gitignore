@@ -51,3 +51,9 @@ security_backup_*/
 *.pfx
 *.p12
 Lot_Factures_*
+
+# Secrets par environnement
+
+# Secrets par environnement
+.env.*
+!.env.example

@@ -2,39 +2,48 @@
 services:
   db:
     image: postgres:17-alpine
-    container_name: edimaroc_postgres17
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: postgres
+      POSTGRES_USER: "${POSTGRES_USER:-postgres}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD requis}"
+      POSTGRES_DB: "${POSTGRES_DB:?POSTGRES_DB requis}"
     ports:
-      - "5432:5432"
+      - "${BIND_IP:-127.0.0.1}:${DB_HOST_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   backend:
     build: .
-    container_name: edimaroc_backend_go
     environment:
-      DATABASE_URL: "host=db port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
+      DATABASE_URL: "${DATABASE_URL:?DATABASE_URL requis}"
       PORT: "8080"
-      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN}
+      ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:?ADMIN_API_TOKEN requis}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
-      - "8080:8080"
+      - "${BIND_IP:-127.0.0.1}:${BACKEND_HOST_PORT:-8080}:8080"
+    restart: unless-stopped
 
   proxy:
     image: nginx:alpine
-    container_name: edimaroc_nginx_proxy
     ports:
-      - "80:80"
-      - "443:443"
+      - "${BIND_IP:-127.0.0.1}:${HTTP_HOST_PORT:-80}:80"
+      - "${BIND_IP:-127.0.0.1}:${HTTPS_HOST_PORT:-443}:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./portal.html:/usr/share/nginx/html/index.html:ro
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   pgdata:
