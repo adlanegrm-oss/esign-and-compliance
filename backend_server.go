@@ -1,4 +1,3 @@
-﻿
 package main
 
 import (
@@ -233,12 +232,19 @@ func main() {
 		log.Fatalf("Initialisation de la base impossible : %v", err)
 	}
 
+	if err := initializeIDPSchema(db); err != nil {
+		log.Fatalf("Initialisation IDP impossible : %v", err)
+	}
 	app := &App{db: db, token: token}
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /api/v1/users", app.authenticate(app.listUsers))
 	mux.HandleFunc("POST /api/v1/users", app.authenticate(app.createUser))
 	mux.HandleFunc("GET /api/v1/admin/metrics", app.authenticate(app.metrics))
+	mux.HandleFunc("POST /api/v1/documents/upload", app.authenticate(app.uploadDocument))
+	mux.HandleFunc("POST /api/v1/idp/process", app.authenticate(app.triggerIDP))
+	mux.HandleFunc("GET /api/v1/idp/status/{id}", app.authenticate(app.getIDPStatus))
+	mux.HandleFunc("GET /api/v1/documents/{id}", app.authenticate(app.getDocument))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -254,4 +260,3 @@ func main() {
 	log.Printf("Serveur dÃ©marrÃ© sur le port %s", port)
 	log.Fatal(server.ListenAndServe())
 }
-

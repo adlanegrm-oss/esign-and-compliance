@@ -26,11 +26,14 @@ services:
       DATABASE_URL: "${DATABASE_URL:?DATABASE_URL requis}"
       PORT: "8080"
       ADMIN_API_TOKEN: "${ADMIN_API_TOKEN:?ADMIN_API_TOKEN requis}"
+      UPLOAD_DIR: /app/uploads
     depends_on:
       db:
         condition: service_healthy
     ports:
       - "${BIND_IP:-127.0.0.1}:${BACKEND_HOST_PORT:-8080}:8080"
+    volumes:
+      - uploads:/app/uploads
     restart: unless-stopped
 
   proxy:
@@ -48,3 +51,4 @@ services:
 
 volumes:
   pgdata:
+  uploads:
