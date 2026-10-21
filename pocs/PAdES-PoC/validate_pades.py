@@ -37,4 +37,3 @@ for path in files:
 
     except Exception as exc:
         print("Erreur de validation :", repr(exc))
-
