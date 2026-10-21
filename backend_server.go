@@ -1,264 +1,256 @@
-﻿package main
+
+package main
 
 import (
-"crypto/hmac"
-"crypto/sha256"
-"database/sql"
-"encoding/base64"
-"encoding/json"
-"fmt"
-"log"
-"net/http"
-"os"
-"regexp"
-"strings"
-"time"
+	"context"
+	"crypto/subtle"
+	"database/sql"
+	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
-_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var (
-jwtSecret   = []byte("EDI_MAROC_SECRET_KEY_2026_COMPLIANCE_TRUST")
-db          *sql.DB
-iceRegex    = regexp.MustCompile(`^[0-9]{15}$`)
-ifRegex     = regexp.MustCompile(`^[0-9]{6,10}$`)
-tpRegex     = regexp.MustCompile(`^[0-9]{8}$`)
-)
-
-type LoginRequest struct {
-Username string `json:"username"`
-Password string `json:"password"`
+type User struct {
+	ID        int64     `json:"id"`
+	Username  string    `json:"username"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
-type LoginResponse struct {
-Token     string `json:"token"`
-Role      string `json:"role"`
-ExpiresAt string `json:"expires_at"`
+type App struct {
+	db    *sql.DB
+	token string
 }
 
-type SignBatchRequest struct {
-TotalDocuments int    `json:"total_documents"`
-Profile        string `json:"profile"`
-PinOrPass      string `json:"pin_or_pass"`
+func writeJSON(w http.ResponseWriter, status int, data any) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		log.Printf("Erreur JSON : %v", err)
+	}
 }
 
-type ComplianceCheckRequest struct {
-RaisonSociale   string  `json:"raison_sociale"`
-ICE             string  `json:"ice"`
-IF              string  `json:"if"`
-TP              string  `json:"tp"`
-Article261Exo   bool    `json:"article_261_exo"`
-MotifExoneration string `json:"motif_exoneration"`
-TotalHT         float64 `json:"total_ht"`
+func (a *App) authenticate(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const prefix = "Bearer "
+		header := r.Header.Get("Authorization")
+
+		if !strings.HasPrefix(header, prefix) {
+			writeJSON(w, http.StatusUnauthorized,
+				map[string]string{"error": "Authentification requise"})
+			return
+		}
+
+		token := strings.TrimPrefix(header, prefix)
+		if len(token) != len(a.token) ||
+			subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
+			writeJSON(w, http.StatusUnauthorized,
+				map[string]string{"error": "Jeton invalide"})
+			return
+		}
+
+		next(w, r)
+	}
+}
+
+func (a *App) listUsers(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	rows, err := a.db.QueryContext(ctx, `
+		SELECT id, username, email, role, created_at
+		FROM users ORDER BY id
+	`)
+	if err != nil {
+		log.Printf("Erreur lecture utilisateurs : %v", err)
+		writeJSON(w, http.StatusInternalServerError,
+			map[string]string{"error": "Erreur lors de la lecture des utilisateurs"})
+		return
+	}
+	defer rows.Close()
+
+	users := make([]User, 0)
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.Role, &u.CreatedAt); err != nil {
+			log.Printf("Erreur lecture ligne : %v", err)
+			writeJSON(w, http.StatusInternalServerError,
+				map[string]string{"error": "Erreur lors de la lecture des utilisateurs"})
+			return
+		}
+		users = append(users, u)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Erreur parcours lignes : %v", err)
+		writeJSON(w, http.StatusInternalServerError,
+			map[string]string{"error": "Erreur lors de la lecture des utilisateurs"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, users)
+}
+
+func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	defer r.Body.Close()
+
+	var input struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Role     string `json:"role"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&input); err != nil {
+		writeJSON(w, http.StatusBadRequest,
+			map[string]string{"error": "Corps JSON invalide"})
+		return
+	}
+
+	input.Username = strings.TrimSpace(input.Username)
+	input.Email = strings.TrimSpace(input.Email)
+	input.Role = strings.ToUpper(strings.TrimSpace(input.Role))
+
+	if input.Username == "" || input.Email == "" {
+		writeJSON(w, http.StatusBadRequest,
+			map[string]string{"error": "username et email sont obligatoires"})
+		return
+	}
+
+	if input.Role != "ADMIN" && input.Role != "ADHERENT" {
+		writeJSON(w, http.StatusBadRequest,
+			map[string]string{"error": "role doit être ADMIN ou ADHERENT"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	var u User
+	err := a.db.QueryRowContext(ctx, `
+		INSERT INTO users (username, email, role)
+		VALUES ($1, $2, $3)
+		RETURNING id, username, email, role, created_at
+	`, input.Username, input.Email, input.Role).Scan(
+		&u.ID, &u.Username, &u.Email, &u.Role, &u.CreatedAt,
+	)
+
+	if err != nil {
+		var stateError interface{ SQLState() string }
+		if errors.As(err, &stateError) && stateError.SQLState() == "23505" {
+			writeJSON(w, http.StatusConflict,
+				map[string]string{"error": "username ou email déjà utilisé"})
+			return
+		}
+
+		log.Printf("Erreur création utilisateur : %v", err)
+		writeJSON(w, http.StatusInternalServerError,
+			map[string]string{"error": "Impossible de créer l'utilisateur"})
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, u)
+}
+
+func (a *App) metrics(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	if err := a.db.PingContext(ctx); err != nil {
+		writeJSON(w, http.StatusServiceUnavailable,
+			map[string]string{"server_status": "DATABASE_UNAVAILABLE"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK,
+		map[string]string{"server_status": "ONLINE"})
+}
+
+func initializeDatabase(db *sql.DB) error {
+	_, err := db.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id BIGSERIAL PRIMARY KEY,
+			username VARCHAR(100) NOT NULL UNIQUE,
+			email VARCHAR(254) NOT NULL UNIQUE,
+			role VARCHAR(20) NOT NULL
+				CHECK (role IN ('ADMIN', 'ADHERENT')),
+			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+		)
+	`)
+	return err
 }
 
 func main() {
-dbConnStr := os.Getenv("DATABASE_URL")
-if dbConnStr == "" {
-dbConnStr = "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
-}
+	dsn := os.Getenv("DATABASE_URL")
+	if dsn == "" {
+		log.Fatal("DATABASE_URL absent : démarrage refusé")
+	}
 
-var err error
-db, err = sql.Open("postgres", dbConnStr)
-if err != nil {
-log.Printf("[WARN] Base locale non joignable immédiatement: %v", err)
-} else {
-db.SetMaxOpenConns(50)
-db.SetMaxIdleConns(10)
-db.SetConnMaxLifetime(time.Hour)
-log.Println("[INFO] Connectique PostgreSQL 17 configurée avec succès.")
-}
+	token := os.Getenv("ADMIN_API_TOKEN")
+	if token == "" {
+		log.Fatal("ADMIN_API_TOKEN absent : démarrage refusé")
+	}
 
-mux := http.NewServeMux()
+	db, err := sql.Open("pgx", dsn)
+	if err != nil {
+		log.Fatalf("Configuration PostgreSQL impossible : %v", err)
+	}
+	defer db.Close()
 
-// Endpoints API REST v1
-mux.HandleFunc("/api/v1/auth/login", enableCORS(handleLogin))
-mux.HandleFunc("/api/v1/pades/sign-batch", enableCORS(authMiddleware(handleSignBatch)))
-mux.HandleFunc("/api/v1/admin/metrics", enableCORS(authMiddleware(handleAdminMetrics)))
-mux.HandleFunc("/api/v1/compliance/dgi-check", enableCORS(authMiddleware(handleComplianceCheck)))
-mux.HandleFunc("/api/v1/ereporting/dgi-export", enableCORS(authMiddleware(handleDgiExport)))
-mux.HandleFunc("/api/v1/certificates/upload-pfx", enableCORS(authMiddleware(handleCertUpload)))
+	db.SetMaxOpenConns(15)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
-port := os.Getenv("PORT")
-if port == "" {
-port = "8080"
-}
+	connected := false
+	for attempt := 1; attempt <= 30; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		err = db.PingContext(ctx)
+		cancel()
 
-log.Printf("[INFO] Serveur d'Évolution Backend démarré sur : http://localhost:%s", port)
-if err := http.ListenAndServe(":"+port, mux); err != nil {
-log.Fatalf("[FATAL] Échec démarrage serveur: %v", err)
-}
-}
+		if err == nil {
+			connected = true
+			break
+		}
 
-func enableCORS(next http.HandlerFunc) http.HandlerFunc {
-return func(w http.ResponseWriter, r *http.Request) {
-w.Header().Set("Access-Control-Allow-Origin", "*")
-w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT")
-w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-if r.Method == http.MethodOptions {
-w.WriteHeader(http.StatusOK)
-return
-}
-next(w, r)
-}
-}
+		log.Printf("PostgreSQL indisponible (tentative %d/30)", attempt)
+		time.Sleep(2 * time.Second)
+	}
 
-func generateToken(username, role string) string {
-header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"HS256","typ":"JWT"}`))
-payload := base64.RawURLEncoding.EncodeToString([]byte(fmt.Sprintf(`{"sub":"%s","role":"%s","exp":%d}`, username, role, time.Now().Add(12*time.Hour).Unix())))
-mac := hmac.New(sha256.New, jwtSecret)
-mac.Write([]byte(header + "." + payload))
-signature := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-return header + "." + payload + "." + signature
-}
+	if !connected {
+		log.Fatalf("Connexion PostgreSQL impossible : %v", err)
+	}
 
-func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
-return func(w http.ResponseWriter, r *http.Request) {
-authHeader := r.Header.Get("Authorization")
-if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
-http.Error(w, `{"error":"Token d'autorisation manquant ou invalide"}`, http.StatusUnauthorized)
-return
-}
-next(w, r)
-}
-}
+	if err := initializeDatabase(db); err != nil {
+		log.Fatalf("Initialisation de la base impossible : %v", err)
+	}
 
-func handleLogin(w http.ResponseWriter, r *http.Request) {
-if r.Method != http.MethodPost {
-http.Error(w, `{"error":"Méthode non autorisée"}`, http.StatusMethodNotAllowed)
-return
-}
-var req LoginRequest
-if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-http.Error(w, `{"error":"Payload JSON invalide"}`, http.StatusBadRequest)
-return
-}
+	app := &App{db: db, token: token}
+	mux := http.NewServeMux()
 
-role := "ADHERENT"
-if strings.Contains(strings.ToLower(req.Username), "admin") {
-role = "ADMIN_BACKOFFICE"
-}
+	mux.HandleFunc("GET /api/v1/users", app.authenticate(app.listUsers))
+	mux.HandleFunc("POST /api/v1/users", app.authenticate(app.createUser))
+	mux.HandleFunc("GET /api/v1/admin/metrics", app.metrics)
 
-resp := LoginResponse{
-Token:     generateToken(req.Username, role),
-Role:      role,
-ExpiresAt: time.Now().Add(12 * time.Hour).Format(time.RFC3339),
-}
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(resp)
-}
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
 
-func handleSignBatch(w http.ResponseWriter, r *http.Request) {
-var req SignBatchRequest
-json.NewDecoder(r.Body).Decode(&req)
-if req.TotalDocuments <= 0 {
-req.TotalDocuments = 200
-}
-if req.Profile == "" {
-req.Profile = "PAdES-B-LT"
-}
+	server := &http.Server{
+		Addr:              ":" + port,
+		Handler:           mux,
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
-okCount := (req.TotalDocuments * 67) / 100
-nokCount := req.TotalDocuments - okCount
-
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(map[string]interface{}{
-"status":          "BATCH_PROCESSED",
-"profile":         req.Profile,
-"ocsp_validation": "REVOCATION_CHECK_VALIDATED_LTV",
-"total":           req.TotalDocuments,
-"valid_signed":    okCount,
-"rejected":        nokCount,
-"zip_download":    "/Lot_Factures_Signees_PAdES.zip",
-"targz_download":  "/Lot_Factures_Signees_PAdES.tar.gz",
-"timestamp":       time.Now().Format("2006-01-02 15:04:05"),
-})
-}
-
-func handleAdminMetrics(w http.ResponseWriter, r *http.Request) {
-w.Header().Set("Content-Type", "application/json")
-metrics := map[string]interface{}{
-"server_status": "ONLINE",
-"engine":        "PostgreSQL 17.0 (x64 Windows) + Go 1.24 PAdES",
-"active_connections": 3,
-"tables": []map[string]string{
-{"table": "logs_signatures_pades", "taille": "112 kB", "lignes": "200"},
-{"table": "flux_documents", "taille": "80 kB", "lignes": "100"},
-{"table": "piste_audit", "taille": "64 kB", "lignes": "45"},
-{"table": "synthese_mouvements_temporels", "taille": "48 kB", "lignes": "10"},
-{"table": "flux_ereporting", "taille": "24 kB", "lignes": "2"},
-},
-"pades_engine": map[string]string{
-"binary":     "pades_sign.exe",
-"lts_policy": "RFC 3161 + OCSP Realtime Stapling",
-"status":     "READY",
-},
-}
-json.NewEncoder(w).Encode(metrics)
-}
-
-func handleComplianceCheck(w http.ResponseWriter, r *http.Request) {
-var req ComplianceCheckRequest
-json.NewDecoder(r.Body).Decode(&req)
-
-errors := []string{}
-if !iceRegex.MatchString(req.ICE) {
-errors = append(errors, "[DGI-ICE-01] ICE invalide : doit comporter strictement 15 chiffres numériques.")
-}
-if !ifRegex.MatchString(req.IF) {
-errors = append(errors, "[DGI-IF-02] Identifiant Fiscal (IF) invalide.")
-}
-if req.Article261Exo && strings.TrimSpace(req.MotifExoneration) == "" {
-errors = append(errors, "[DGI-EXO-03] Exonération Art. 261 CGI déclarée mais motif officiel manquant.")
-}
-
-valid := len(errors) == 0
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(map[string]interface{}{
-"conforme":        valid,
-"anomalies":       errors,
-"ice_verifie":     req.ICE,
-"mention_legale":  "Conforme dispositions Décret Facturation Électronique & DGI Maroc",
-"date_evaluation": time.Now().Format(time.RFC3339),
-})
-}
-
-func handleDgiExport(w http.ResponseWriter, r *http.Request) {
-format := r.URL.Query().Get("format")
-w.Header().Set("Content-Disposition", "attachment; filename=Bordereau_DGI_Transmission_2026."+format)
-
-if format == "xml" {
-w.Header().Set("Content-Type", "application/xml")
-xmlData := fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
-<BordereauEreportingDGI xmlns="urn:dgi:maroc:einvoice:v1">
-    <Entete>
-        <Version>1.0</Version>
-        <DateGeneration>%s</DateGeneration>
-        <AdherentICE>001234567890123</AdherentICE>
-    </Entete>
-    <Periode>2026-10-W42</Periode>
-    <Statut>CONFORME_TRANSMIS</Statut>
-</BordereauEreportingDGI>`, time.Now().Format("2006-01-02T15:04:05"))
-w.Write([]byte(xmlData))
-return
-}
-
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(map[string]interface{}{
-"bordereau_dgi": "EXPORT_OFFICIEL",
-"periode":       "2026-10-W42",
-"statut":        "VALIDE_ET_SIGNE",
-"date":          time.Now().Format(time.RFC3339),
-})
-}
-
-func handleCertUpload(w http.ResponseWriter, r *http.Request) {
-w.Header().Set("Content-Type", "application/json")
-json.NewEncoder(w).Encode(map[string]interface{}{
-"status":      "CERTIFICATE_INSTALLED",
-"type":        "PKCS#12 (.pfx/.p12)",
-"pki_chain":   "TRUSTED_ROOT_DGI",
-"revocation":  "OCSP_ONLINE_CHECK_OK",
-"profile_lt":  "PADES_LTV_ENABLED",
-})
+	log.Printf("Serveur démarré sur le port %s", port)
+	log.Fatal(server.ListenAndServe())
 }

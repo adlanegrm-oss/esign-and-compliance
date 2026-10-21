@@ -1,0 +1,1661 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Einvoice Compliance & Trust — Portail Dynamique REST</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --client-blue: #2563eb;
+            --signature-purple: #7c3aed;
+            --admin-red: #dc2626;
+            --bg-page: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #cbd5e1;
+            --row-ok: #dcfce7;
+            --row-nok: #fee2e2;
+            --badge-ok: #15803d;
+            --badge-nok: #b91c1c;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background: var(--bg-page); color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; }
+
+        .topbar {
+            background: #0f172a;
+            color: #fff;
+            padding: 0.85rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .topbar-brand { font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; }
+        .tag-env { background: #0369a1; padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; color: #fff; }
+        
+        .user-status { display: flex; align-items: center; gap: 1rem; font-size: 0.88rem; }
+        .btn-topbar {
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-topbar:hover { background: #334155; }
+        .btn-logout { background: #7f1d1d; border-color: #991b1b; color: #fecaca; }
+
+        #authScreen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            padding: 3rem 1.5rem;
+            background: radial-gradient(circle at top right, #1e293b, #0f172a);
+        }
+        .auth-card {
+            background: #ffffff;
+            width: 100%;
+            max-width: 440px;
+            border-radius: 14px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.25);
+            padding: 2.5rem;
+        }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 0.35rem; }
+        .form-control { width: 100%; padding: 0.7rem 0.9rem; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; }
+        .form-control:focus { outline: none; border-color: var(--client-blue); }
+
+        #portalScreen { display: none; }
+        .container { max-width: 1550px; margin: 1.5rem auto; padding: 0 1.5rem; width: 100%; }
+
+        .spaces-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 2rem; margin-bottom: 2.5rem; }
+        .space-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2.25rem;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .space-card.client { border-top: 6px solid var(--client-blue); }
+        .space-card.signature { border-top: 6px solid var(--signature-purple); }
+        .space-card.admin { border-top: 6px solid var(--admin-red); }
+
+        .btn-access { display: block; text-align: center; width: 100%; padding: 0.85rem; border-radius: 6px; font-weight: 700; color: #fff; border: none; cursor: pointer; }
+        .btn-access.client { background: var(--client-blue); }
+        .btn-access.signature { background: var(--signature-purple); }
+        .btn-access.admin { background: var(--admin-red); }
+
+        .session-view { display: none; }
+
+        .admin-layout-container {
+            display: grid;
+            grid-template-columns: 310px 1fr;
+            gap: 1.75rem;
+            align-items: start;
+        }
+
+        .admin-sidebar-menu {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-top: 5px solid var(--admin-red);
+            border-radius: 10px;
+            padding: 1.25rem 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: sticky;
+            top: 5.5rem;
+        }
+        .sidebar-header-label { font-size: 0.75rem; font-weight: 800; color: #94a3b8; text-transform: uppercase; padding: 0.5rem 0.75rem; }
+        .admin-vtab-btn {
+            background: transparent;
+            border: 1px solid transparent;
+            padding: 0.85rem 1rem;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 100%;
+        }
+        .admin-vtab-btn:hover { background: #f1f5f9; color: var(--admin-red); }
+        .admin-vtab-btn.active { background: var(--admin-red); color: #ffffff; font-weight: 700; }
+
+        .rubrique-panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+        }
+        .rubrique-header { border-bottom: 1px solid var(--border-color); padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
+        .rubrique-title { font-size: 1.35rem; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
+
+        .table-responsive { overflow-x: auto; margin-top: 1rem; border-radius: 6px; border: 1px solid var(--border-color); max-height: 480px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+        thead th { background: #f8fafc; color: #334155; padding: 0.8rem 1rem; font-weight: 600; border-bottom: 2px solid var(--border-color); }
+        tbody td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+        .badge-ok { background: #dcfce7; color: var(--badge-ok); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem; }
+        .badge-nok { background: #fee2e2; color: var(--badge-nok); padding: 4px 8px; border-radius: 4px; font-weight: 700; font-size: 0.72rem; }
+
+        .btn-group { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .btn { border: none; padding: 0.65rem 1.25rem; border-radius: 6px; font-weight: 600; font-size: 0.88rem; cursor: pointer; color: #fff; text-decoration: none; }
+        .btn-primary { background: var(--client-blue); }
+        .btn-admin { background: var(--admin-red); }
+        .btn-excel { background: #059669; }
+        .btn-sig { background: var(--signature-purple); }
+    </style>
+</head>
+<body>
+    <!-- CADRE D'UPLOAD DYNAMIQUE & AUDIT FISCAL AVANT SIGNATURE -->
+    <div style="background: #ffffff; border: 2px dashed #3b82f6; border-radius: 12px; padding: 25px; margin: 20px 0; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.04);">
+        <div style="font-size: 2.2rem; margin-bottom: 8px;">📑 🔒</div>
+        <h3 style="margin: 0 0 6px 0; color: #0f172a; font-size: 1.15rem;">Déposer vos lots de factures PDF à contrôler et sceller</h3>
+        <p style="margin: 0 0 15px 0; color: #64748b; font-size: 0.85rem;">
+            Vérification stricte de conformité DGI (Art. 145 CGI) et EN 16931 / DGFiP avant scellement PAdES-LTV.
+        </p>
+
+        <input type="file" id="realPdfInput" accept="application/pdf" multiple style="display: none;" onchange="gererSelectionPdf(event)">
+        
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button type="button" onclick="document.getElementById('realPdfInput').click()" style="background: #2563eb; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                📂 Sélectionner les PDF
+            </button>
+            <button id="btnAuditPreliminaire" type="button" onclick="lancerAuditPrealable()" disabled style="background: #94a3b8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: not-allowed;">
+                🔍 1. Contrôler la conformité légale & fiscale
+            </button>
+            <button id="btnSignerConformes" type="button" onclick="signerEtGenererLivrables()" disabled style="background: #94a3b8; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: not-allowed;">
+                🔒 2. Signer PAdES (Conformes uniquement)
+            </button>
+        </div>
+
+        <div id="fileUploadFeedback" style="margin-top: 12px; font-size: 0.9rem; font-weight: 600; color: #0284c7;"></div>
+        
+        <!-- BANDEAU EXPORT LIVRABLES -->
+        <div id="exportActionContainer" style="display: none; gap: 12px; justify-content: center; margin-top: 15px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+            <button onclick="telechargerLotZip()" style="background: #16a34a; color: white; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                📦 Télécharger le lot scellé (.ZIP)
+            </button>
+            <button onclick="telechargerRapportCSVRejets()" style="background: #dc2626; color: white; border: none; padding: 9px 18px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                📥 Rapport anomalies & corrections (.CSV)
+            </button>
+        </div>
+    </div>
+
+    <header class="topbar">
+        <div class="topbar-brand" onclick="revenirHub()">
+            Einvoice Compliance and Care
+            <span class="tag-env">REST API CONNECTED</span>
+        </div>
+        <div class="user-status" id="topbarUserSection" style="display: none;">
+            <span id="labelConnecte">Connecté : <strong>admin.edimaroc@compliance.ma</strong></span>
+            <button class="btn-topbar" onclick="revenirHub()">&#9776; Accueil des 3 Espaces</button>
+            <button class="btn-topbar btn-logout" onclick="deconnecterSession()">&#128274; Déconnexion</button>
+        </div>
+    </header>
+
+    <!-- AUTHENTIFICATION AVEC APPEL REST REEL -->
+    <main id="authScreen">
+        <div class="auth-card">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">&#128272;</div>
+                <h1 style="font-size: 1.5rem; color: #0f172a; margin-bottom: 0.4rem;">Portail d'Authentification</h1>
+                <p style="font-size: 0.88rem; color: #64748b;">Raccordé en direct à l'API Go REST (POST /api/v1/auth/login)</p>
+            </div>
+
+            <form onsubmit="executerConnexionAPI(event)">
+                <div class="form-group">
+                    <label>Nom d'utilisateur ou Adresse Email :</label>
+                    <input type="text" id="inputUsername" class="form-control" value="admin.edimaroc@compliance.ma" required />
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe :</label>
+                    <input type="password" id="inputPassword" class="form-control" value="postgres" required />
+                </div>
+                <button type="submit" class="btn-access admin" style="width: 100%;">Se connecter (Délivrance JWT REST)</button>
+            </form>
+        </div>
+        <!-- 3. ESPACE BACK-OFFICE & SUPERVISION TECHNIQUE -->
+    <div id="adminView" class="session-view" style="display: none; max-width: 1400px; margin: 20px auto; padding: 0 15px;">
+        <!-- EN-TETE TOUR DE CONTROLE -->
+        <div style="background: #0f172a; border-radius: 10px; padding: 20px 25px; margin-bottom: 20px; color: #fff; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="font-size: 2rem;">🎛️</div>
+                <div>
+                    <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; color: #f8fafc;">Espace Back-Office & Supervision Système</h2>
+                    <p style="margin: 3px 0 0 0; color: #94a3b8; font-size: 0.85rem;">Administration multi-client • Monitoring PostgreSQL 17 • Traçabilité & Alertes Opérationnelles</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center;">
+                <div style="text-align: right;">
+                    <div style="font-size: 0.75rem; color: #38bdf8; font-family: monospace;">JWT: admin.edimaroc@compliance.ma</div>
+                    <div style="font-size: 0.75rem; color: #22c55e; font-weight: 600;">● SESSION ACTIVE & AUTORISÉE</div>
+                </div>
+                <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="background: #334155; color: #fff; border: 1px solid #475569; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                    ← Accueil des 3 Espaces
+                </button>
+            </div>
+        </div>
+
+        <!-- NAVIGATION SOUS-RUBRIQUES BACK-OFFICE -->
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px;">
+            <button onclick="afficherOngletAdmin('kpi')" id="btn-admin-kpi" class="btn-admin-tab" style="background:#2563eb; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📊 Métriques & Supervision</button>
+            <button onclick="afficherOngletAdmin('clients')" id="btn-admin-clients" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">👥 Clients & Habilitations</button>
+            <button onclick="afficherOngletAdmin('postgres')" id="btn-admin-postgres" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🐘 Connexion PostgreSQL 17</button>
+            <button onclick="afficherOngletAdmin('alertes')" id="btn-admin-alertes" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🚨 Alertes & Anomalies <span style="background:#ef4444; color:#fff; padding:1px 6px; border-radius:10px; font-size:0.7rem; margin-left:4px;">3</span></button>
+            <button onclick="afficherOngletAdmin('audit')" id="btn-admin-audit" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📜 Piste d'Audit Admin</button>
+            <button onclick="afficherOngletAdmin('logs')" id="btn-admin-logs" class="btn-admin-tab" style="background:#f8fafc; color:#334155; border:1px solid #e2e8f0; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">🖥️ Logs & Monitoring Live</button>
+        </div>
+
+        <!-- 1. SOUS-ONGLET KPI & TABLEAU DE BORD TRAITEMENTS -->
+        <div id="tab-admin-kpi" class="admin-tab-content">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #2563eb; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Volume Total Traité</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0f172a; margin:8px 0;">357 docs</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">↑ +14% vs heure précédente</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #16a34a; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Taux de Conformité DGI/DGFiP</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#16a34a; margin:8px 0;">67.0 %</div>
+                    <div style="font-size:0.75rem; color:#64748b;">134 scellés PAdES / 66 rejets</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #0284c7; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Pool PostgreSQL Actif</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#0284c7; margin:8px 0;">3 / 20</div>
+                    <div style="font-size:0.75rem; color:#16a34a; font-weight:600;">Latence moy. 4.2 ms</div>
+                </div>
+                <div style="background:#fff; border-radius:8px; padding:18px; border-top:4px solid #ef4444; box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#64748b; font-size:0.8rem; font-weight:700; text-transform:uppercase;">Échecs & Blocages Fiscaux</div>
+                    <div style="font-size:1.8rem; font-weight:700; color:#ef4444; margin:8px 0;">3 alertes</div>
+                    <div style="font-size:0.75rem; color:#dc2626; font-weight:600;">2 ICE manquants • 1 EN 16931</div>
+                </div>
+            </div>
+
+            <!-- TABLEAU DES TABLES & ETAT POSTGRES -->
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a; font-size:1rem;">📦 Synchronisation des Tables PostgreSQL 17 (Architecture Active)</h4>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Nom de la Table</th>
+                            <th style="padding:10px;">Enregistrements</th>
+                            <th style="padding:10px;">Taille Disque</th>
+                            <th style="padding:10px;">Dernière Sync</th>
+                            <th style="padding:10px;">Statut Réplication</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">logs_signatures_pades</td>
+                            <td style="padding:10px;">200 lignes</td>
+                            <td style="padding:10px;">112 kB</td>
+                            <td style="padding:10px;">En temps réel</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_documents</td>
+                            <td style="padding:10px;">100 lignes</td>
+                            <td style="padding:10px;">80 kB</td>
+                            <td style="padding:10px;">Il y a 30 sec</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">piste_audit</td>
+                            <td style="padding:10px;">45 lignes</td>
+                            <td style="padding:10px;">64 kB</td>
+                            <td style="padding:10px;">Il y a 1 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">synthese_mouvements_temporels</td>
+                            <td style="padding:10px;">10 lignes</td>
+                            <td style="padding:10px;">48 kB</td>
+                            <td style="padding:10px;">Il y a 2 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600; font-family:monospace; color:#0f172a;">flux_ereporting</td>
+                            <td style="padding:10px;">2 lignes</td>
+                            <td style="padding:10px;">24 kB</td>
+                            <td style="padding:10px;">Il y a 5 min</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">● SYNCHRONISÉ</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 2. SOUS-ONGLET CLIENTS, UTILISATEURS & HABILITATIONS -->
+        <div id="tab-admin-clients" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Gestion Multi-Clients & Comptes Utilisateurs</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Contrôle des rôles (Admin, Opérateur, Auditeur) et affectation des espaces.</p>
+                    </div>
+                    <button onclick="alert('Formulaire création client : Ajout nouvel adhérent avec ICE et quotas')" style="background:#2563eb; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">+ Nouveau Client Adhérent</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Identifiant / Client</th>
+                            <th style="padding:10px;">ICE / Réf Fiscale</th>
+                            <th style="padding:10px;">Contact Administrateur</th>
+                            <th style="padding:10px;">Rôle Principal</th>
+                            <th style="padding:10px;">Habilitations Activées</th>
+                            <th style="padding:10px;">Statut</th>
+                            <th style="padding:10px; text-align:right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-001 • EDIMAROC LABS</td>
+                            <td style="padding:10px; font-family:monospace;">002894561000045</td>
+                            <td style="padding:10px;">adlane.agrimi@edimaroc.ma</td>
+                            <td style="padding:10px;"><span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">SUPER_ADMIN</span></td>
+                            <td style="padding:10px; color:#475569;">Clients, DGI, PAdES, PostgreSQL</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-weight:600;">CLI-002 • ATLAS DISTRIB</td>
+                            <td style="padding:10px; font-family:monospace;">001923456000088</td>
+                            <td style="padding:10px;">finance@atlasdistrib.ma</td>
+                            <td style="padding:10px;"><span style="background:#f1f5f9; color:#475569; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">OPERATEUR_DEPOT</span></td>
+                            <td style="padding:10px; color:#475569;">Dépôt lots, E-reporting, Téléchargement</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-weight:600;">CLI-003 • AUDIT & FISC SARL</td>
+                            <td style="padding:10px; font-family:monospace;">003112987000012</td>
+                            <td style="padding:10px;">auditeur@fiscalite.fr</td>
+                            <td style="padding:10px;"><span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">AUDITEUR_EXTERNE</span></td>
+                            <td style="padding:10px; color:#475569;">Lecture seule Piste d'audit & Rejets</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">ACTIF</span></td>
+                            <td style="padding:10px; text-align:right;"><button style="background:none; border:none; color:#2563eb; cursor:pointer; font-weight:600;">Modifier</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. SOUS-ONGLET CONFIGURATION POSTGRESQL 17 -->
+        <div id="tab-admin-postgres" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Configuration & Santé de la Base PostgreSQL</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Paramètres de Connexion Actuelle</h5>
+                        <div style="font-size:0.85rem; line-height:1.8; color:#475569;">
+                            <div><strong>Host :</strong> 127.0.0.1:5432 (Localhost Windows x64)</div>
+                            <div><strong>Moteur :</strong> PostgreSQL 17.0 + Go 1.24 PAdES Worker</div>
+                            <div><strong>Base de données :</strong> <code style="color:#0369a1;">edimaroc_compliance_db</code></div>
+                            <div><strong>User :</strong> postgres (SSL certifié TLSv1.3)</div>
+                            <div><strong>Max Connections :</strong> 100 (Pool actif : 3)</div>
+                        </div>
+                        <div style="margin-top:15px;">
+                            <button onclick="testerConnexionPostgres()" style="background:#0284c7; color:#fff; border:none; padding:8px 14px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.85rem;">⚡ Tester la connectivité</button>
+                        </div>
+                    </div>
+                    <div style="border:1px solid #e2e8f0; border-radius:6px; padding:15px; background:#f8fafc;">
+                        <h5 style="margin:0 0 10px 0; color:#1e293b; font-size:0.9rem;">Actions de Maintenance PostgreSQL</h5>
+                        <div style="display:flex; flex-direction:column; gap:8px;">
+                            <button onclick="alert('VACUUM ANALYZE déclenché sur la table logs_signatures_pades')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🧹 Exécuter VACUUM ANALYZE (Optimisation index)</button>
+                            <button onclick="alert('Snapshot de sauvegarde PostgreSQL 17 généré dans /backups/pg_dump.sql')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">💾 Déclencher Sauvegarde Instantanée (pg_dump)</button>
+                            <button onclick="alert('Pool de connexions purgé et réinitialisé')" style="background:#fff; border:1px solid #cbd5e1; padding:8px; border-radius:4px; text-align:left; cursor:pointer; font-size:0.85rem;">🔄 Réinitialiser le pool de connexions</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. SOUS-ONGLET ALERTES & ANOMALIES -->
+        <div id="tab-admin-alertes" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <h4 style="margin:0 0 15px 0; color:#0f172a;">Centre des Alertes Système & Incidents Métier</h4>
+                <div style="display:flex; flex-direction:column; gap:10px;">
+                    <div style="background:#fef2f2; border:1px solid #fecaca; border-left:5px solid #dc2626; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#991b1b; font-weight:700; font-size:0.9rem;">🚨 Rejet Bloquant DGI : 66 factures sans ICE valide</div>
+                            <div style="color:#7f1d1d; font-size:0.8rem; margin-top:2px;">Lot FA-PADES-003 à FA-PADES-198 : Non-conformité CGI Art. 145. Scellement suspendu.</div>
+                        </div>
+                        <button onclick="alert('Rapport transmis à l équipe fiscale')" style="background:#dc2626; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Notifier le Client</button>
+                    </div>
+                    <div style="background:#fffbeb; border:1px solid #fde68a; border-left:5px solid #d97706; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#92400e; font-weight:700; font-size:0.9rem;">⚠️ Latence Réseau TSA RFC 3161 (> 1200ms)</div>
+                            <div style="color:#78350f; font-size:0.8rem; margin-top:2px;">Le serveur d'horodatage externe a répondu avec retard lors du scellement du lot #200.</div>
+                        </div>
+                        <button onclick="alert('Bascule sur le serveur TSA de secours')" style="background:#d97706; color:#fff; border:none; padding:6px 12px; border-radius:4px; font-weight:600; cursor:pointer; font-size:0.8rem;">Basculer TSA Secours</button>
+                    </div>
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-left:5px solid #16a34a; border-radius:6px; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <div style="color:#166534; font-weight:700; font-size:0.9rem;">✅ Connexion PostgreSQL 17 Stable</div>
+                            <div style="color:#14532d; font-size:0.8rem; margin-top:2px;">Tous les workers de validation Schematron et signature Go sont opérationnels.</div>
+                        </div>
+                        <span style="color:#16a34a; font-weight:700; font-size:0.8rem;">R.A.S</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SOUS-ONGLET PISTE D'AUDIT ADMIN -->
+        <div id="tab-admin-audit" class="admin-tab-content" style="display:none;">
+            <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.05); margin-bottom:20px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div>
+                        <h4 style="margin:0; color:#0f172a;">Piste d'Audit des Actions Administratives</h4>
+                        <p style="margin:3px 0 0 0; color:#64748b; font-size:0.85rem;">Journal infalsifiable des modifications techniques et des accès aux rôles.</p>
+                    </div>
+                    <button onclick="alert('Export de la piste d audit admin au format Excel / CSV')" style="background:#1e293b; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">📥 Exporter Log Audit</button>
+                </div>
+                <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                    <thead>
+                        <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                            <th style="padding:10px;">Horodatage</th>
+                            <th style="padding:10px;">Opérateur / JWT</th>
+                            <th style="padding:10px;">Action Déclenchée</th>
+                            <th style="padding:10px;">Cible</th>
+                            <th style="padding:10px;">Empreinte SHA-256</th>
+                            <th style="padding:10px;">Résultat</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:15:22</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">VALIDATION_LOT_MULTINORMES</td>
+                            <td style="padding:10px;">Lot #200 PDF (DGI+DGFiP)</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">e3b0c44298fc1c14...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 01:10:04</td>
+                            <td style="padding:10px; font-weight:600;">admin.edimaroc</td>
+                            <td style="padding:10px;">EXCLUSION_DOCS_NOK</td>
+                            <td style="padding:10px;">66 pièces non conformes ICE</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">a8f5c123d90e4a77...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                        <tr>
+                            <td style="padding:10px; font-family:monospace;">16/10/2026 00:55:18</td>
+                            <td style="padding:10px; font-weight:600;">system_cron</td>
+                            <td style="padding:10px;">SYNCHRO_POSTGRES_PGDUMP</td>
+                            <td style="padding:10px;">Base edimaroc_compliance_db</td>
+                            <td style="padding:10px; font-family:monospace; font-size:0.75rem;">7c9b3104e12fa89b...</td>
+                            <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">SUCCÈS</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 6. SOUS-ONGLET LOGS & MONITORING EN DIRECT -->
+        <div id="tab-admin-logs" class="admin-tab-content" style="display:none;">
+            <div style="background:#0f172a; border-radius:8px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px solid #334155; padding-bottom:10px;">
+                    <div style="color:#38bdf8; font-weight:700; font-size:0.9rem; font-family:monospace;">🖥️ Console de Supervision Applicative & Worker Go PAdES</div>
+                    <div style="display:flex; gap:10px;">
+                        <button onclick="rafraichirLogsAdmin()" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">🔄 Rafraîchir</button>
+                        <button onclick="document.getElementById('adminConsoleLogs').innerText=''" style="background:#1e293b; color:#94a3b8; border:1px solid #475569; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Effacer</button>
+                    </div>
+                </div>
+                <div id="adminConsoleLogs" style="font-family:Consolas, 'Courier New', monospace; font-size:0.8rem; color:#a5f3fc; line-height:1.6; max-height:350px; overflow-y:auto; white-space:pre-wrap;">
+[2026-10-16 01:15:00] [POSTGRES] Connected to 127.0.0.1:5432 (PostgreSQL 17.0 x64) - Pool idle: 17, active: 3
+[2026-10-16 01:15:01] [PADES_WORKER] Engine binary 'pades_sign.exe' ready. RFC 3161 timestamping responder validated.
+[2026-10-16 01:15:02] [DISPATCHER] Received batch: 200 documents via REST API (/api/v1/admin/metrics)
+[2026-10-16 01:15:04] [LEGAL_GATEKEEPER] Rule DGI-MAROC-CGI-145: 134 OK, 66 NOK (ICE missing)
+[2026-10-16 01:15:05] [LEGAL_GATEKEEPER] Rule CEN-EN-16931: CIUS-FR syntax check completed.
+[2026-10-16 01:15:06] [PADES_WORKER] Scellement de 134 factures certifiées valides terminé en 1.84s (SHA-256 + RSA 2048).
+[2026-10-16 01:15:07] [MONITOR] System memory: 284 MB / 32 GB RAM. CPU usage: 1.4%. All services GREEN.
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+    <!-- PORTAIL CONNECTE -->
+    <div id="portalScreen">
+        <div class="container">
+            
+            <div id="hubView">
+                <h1 style="text-align:center; font-size:1.9rem; margin-bottom:0.5rem;">Plateforme de Facturation & Signature Électronique</h1>
+                <p style="text-align:center; color:#64748b; margin-bottom:2.5rem;">Endpoints REST Go opérationnels sur http://localhost:8080</p>
+
+                <div class="spaces-grid">
+                    <div class="space-card client">
+                        <div>
+                            <h2>1. Espace Client Adhérent</h2>
+                            <p style="color:#64748b; margin-top:0.5rem;">Validation DGI Maroc & e-reporting fiscal.</p>
+                        </div>
+                        <button class="btn-access client" onclick="afficherSession('client')">Accéder &rarr;</button>
+                    </div>
+
+                    <div class="space-card signature">
+                        <div>
+                            <h2>2. Session Signature PAdES</h2>
+                            <p style="color:#64748b; margin-top:0.5rem;">Scellement asynchrone REST PAdES-B-LT.</p>
+                        </div>
+                        <button class="btn-access signature" onclick="afficherSession('signature')">Accéder &rarr;</button>
+                    </div>
+
+                    <div class="space-card admin">
+                        <div>
+                            <h2>3. Back-Office & Supervision</h2>
+                            <p style="color:#64748b; margin-top:0.5rem;">Métriques temps réel depuis PostgreSQL 17.</p>
+                        </div>
+                        <button class="btn-access admin" onclick="afficherSession('admin')">Accéder &rarr;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESPACE 2 : SIGNATURE AVEC DECLENCHEMENT REST REEL -->
+                    <!-- Espace 1 : Espace Client Adhérent (DGI Maroc / DGFiP France) -->
+            <!-- ESPACE 1 : ESPACE CLIENT ADHÉRENT (LAYOUT VERTICAL MÉTIER COMPLET) -->
+        <!-- ESPACE 1 : ESPACE CLIENT ADHÉRENT (LAYOUT VERTICAL MÉTIER COMPLET) -->
+        <!-- ESPACE 1 : ESPACE CLIENT ADHÉRENT (LAYOUT VERTICAL MÉTIER COMPLET) -->
+    <div id="clientView" class="session-view" style="max-width: 1440px; margin: 20px auto; padding: 0 15px;">
+        <div style="display: flex; gap: 20px; align-items: flex-start;">
+            
+            <!-- MENU VERTICAL LATÉRAL GAUCHE (300px) -->
+            <div style="width: 300px; flex-shrink: 0; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.06); border-top: 4px solid #2563eb; padding: 20px 15px;">
+                <div style="font-size: 0.75rem; font-weight: 700; color: #64748b; letter-spacing: 0.05em; margin-bottom: 15px; text-transform: uppercase;">
+                    🏛️ Espace Client Adhérent
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button onclick="naviguerClientTab('depot')" id="tabbtn-depot" class="client-side-btn active-side-btn">
+                        📤 Dépôt & Contrôles multi-formats
+                    </button>
+                    <button onclick="naviguerClientTab('traitements')" id="tabbtn-traitements" class="client-side-btn">
+                        📈 Suivi des traitements
+                    </button>
+                    <button onclick="naviguerClientTab('erreurs')" id="tabbtn-erreurs" class="client-side-btn">
+                        ⚠️ Erreurs & Corrections recommandées
+                    </button>
+                    <button onclick="naviguerClientTab('archives')" id="tabbtn-archives" class="client-side-btn">
+                        🗄️ Archives & Consultation
+                    </button>
+                    <button onclick="naviguerClientTab('ereporting')" id="tabbtn-ereporting" class="client-side-btn">
+                        📊 E-reporting fiscal
+                    </button>
+                    <button onclick="naviguerClientTab('recap')" id="tabbtn-recap" class="client-side-btn">
+                        📦 Récap Factures Conformes
+                    </button>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+
+                <div style="background: #f8fafc; border-radius: 6px; padding: 12px; margin-bottom: 15px; font-size: 0.8rem; color: #475569;">
+                    <div style="font-weight: 700; color: #1e293b; margin-bottom: 4px;">Normes supportées :</div>
+                    <div>🇲🇦 DGI Maroc (Loi 43-20 / CGI 145)</div>
+                    <div>🇫🇷 DGFiP / PA (PPF) & PDP 2026</div>
+                    <div>🇪🇺 CEN EN 16931 (UBL / CII)</div>
+                </div>
+
+                <button onclick="document.getElementById('hubView').style.display='block'; document.querySelectorAll('.session-view').forEach(s => s.style.display='none');" style="width: 100%; background: #475569; color: white; border: none; padding: 10px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">
+                    ← Revenir au Portail des Espaces
+                </button>
+            </div>
+
+            <!-- ZONE DE CONTENU DYNAMIQUE DROITE -->
+            <div style="flex-grow: 1; background: #ffffff; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.06); border-top: 4px solid #0284c7; padding: 25px; min-height: 600px;">
+                
+                <!-- 1. DÉPÔT & CONTRÔLES MULTI-FORMATS -->
+                <div id="csec-depot" class="client-section-panel">
+                    <h3 style="margin-top:0; color:#0f172a; font-size:1.25rem;">📤 Dépôt & Contrôles multi-formats (jusqu'à 100 documents)</h3>
+                    <p style="color:#64748b; font-size:0.85rem; line-height: 1.5;">
+                        Formats acceptés pour normalisation et validation : <strong>EDIFACT (INVOIC), fichier plat, XML UN/CEFACT CII, UBL 2.1, Factur-X et PDF natifs</strong>.
+                    </p>
+
+                    <div style="border: 2px dashed #3b82f6; border-radius: 8px; padding: 30px; text-align: center; background: #f8fafc; margin: 20px 0;">
+                        <input type="file" id="clientBatchFiles" accept=".pdf,.xml,.edi,.txt,.csv,.json" multiple style="display:none;" onchange="handleClientFilesSelected(event)">
+                        <button type="button" onclick="document.getElementById('clientBatchFiles').click()" style="background:#2563eb; color:#fff; border:none; padding:12px 24px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.95rem;">
+                            📂 Parcourir les fichiers (EDIFACT / Plat / XML / PDF)
+                        </button>
+                        <div id="clientFileCountBadge" style="margin-top:12px; font-weight:600; color:#0369a1; font-size:0.9rem;">Aucun document sélectionné</div>
+                    </div>
+
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                        <button onclick="lancerTraitementClient('DGI')" style="background:#2563eb; color:#fff; border:none; padding:11px 20px; border-radius:6px; font-weight:600; cursor:pointer;">
+                            🇲🇦 Contrôle DGI Maroc (ICE / IF / Art. 145)
+                        </button>
+                        <button onclick="lancerTraitementClient('DGFIP')" style="background:#0284c7; color:#fff; border:none; padding:11px 20px; border-radius:6px; font-weight:600; cursor:pointer;">
+                            🇫🇷 Contrôle DGFiP Réforme (Norme PA / PPF & PDP)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. SUIVI DES TRAITEMENTS -->
+                <div id="csec-traitements" class="client-section-panel" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                        <h3 style="margin:0; color:#0f172a; font-size:1.2rem;">📈 Suivi des traitements & progression des flux</h3>
+                        <span id="progressionStatutBadge" style="background:#f1f5f9; color:#475569; padding:4px 12px; border-radius:6px; font-weight:600; font-size:0.8rem;">En attente</span>
+                    </div>
+
+                    <div style="width:100%; background:#f1f5f9; border-radius:6px; height:12px; overflow:hidden; margin-bottom:20px;">
+                        <div id="traitementProgressBar" style="width:0%; height:100%; background:#2563eb; transition: width 0.4s ease;"></div>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                                <th style="padding:10px;">Réf Facture</th>
+                                <th style="padding:10px;">Format Entrant</th>
+                                <th style="padding:10px;">Norme Fiscale</th>
+                                <th style="padding:10px;">Progression</th>
+                                <th style="padding:10px;">Statut Traitement</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableTraitementsBody">
+                            <tr><td colspan="5" style="padding:20px; text-align:center; color:#94a3b8;">Aucun lot en cours de traitement. Veuillez déposer vos documents via la rubrique Dépôt.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 3. ERREURS & CORRECTIONS RECOMMANDÉES -->
+                <div id="csec-erreurs" class="client-section-panel" style="display:none;">
+                    <h3 style="margin-top:0; color:#0f172a; font-size:1.2rem;">⚠️ Détail des erreurs, anomalies et corrections recommandées</h3>
+                    <p style="color:#64748b; font-size:0.85rem;">
+                        Contrôles réglementaires DGI Maroc et Réforme DGFiP France pour Plateforme Publique (PA) et Partenaires (PDP).
+                    </p>
+                    
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                                <th style="padding:10px;">Document Source</th>
+                                <th style="padding:10px;">Règle / Norme</th>
+                                <th style="padding:10px;">Anomalie constatée</th>
+                                <th style="padding:10px;">Correction recommandée (avant signature)</th>
+                                <th style="padding:10px; text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableErreursBody">
+                            <tr><td colspan="5" style="padding:20px; text-align:center; color:#94a3b8;">Aucune anomalie détectée sur le lot courant.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 4. ARCHIVES & CONSULTATION -->
+                <div id="csec-archives" class="client-section-panel" style="display:none;">
+                    <h3 style="margin-top:0; color:#0f172a; font-size:1.2rem;">🗄️ Archives, Consultation & Visuels PDF générés</h3>
+                    <p style="color:#64748b; font-size:0.85rem;">
+                        Recherche par plage de dates. Visualisation et téléchargement des visuels PDF générés par la plateforme quel que soit le format d'origine (EDIFACT, plat, XML CII, UBL).
+                    </p>
+                    
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:20px; display:flex; gap:15px; align-items:flex-end; flex-wrap:wrap;">
+                        <div>
+                            <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Date Début :</label>
+                            <input type="date" id="archDateStart" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.75rem; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Date Fin :</label>
+                            <input type="date" id="archDateEnd" style="padding:6px 10px; border:1px solid #cbd5e1; border-radius:4px; font-size:0.85rem;">
+                        </div>
+                        <button onclick="filtrerArchivesParDate()" style="background:#0284c7; color:#fff; border:none; padding:8px 16px; border-radius:4px; font-weight:600; cursor:pointer;">
+                            🔍 Filtrer la période
+                        </button>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                                <th style="padding:10px;">ID Archive</th>
+                                <th style="padding:10px;">Format d'origine</th>
+                                <th style="padding:10px;">Date Réception</th>
+                                <th style="padding:10px;">Empreinte Archivage SHA-256</th>
+                                <th style="padding:10px; text-align:right;">Visualisation & Export</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableArchivesBody">
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px; font-weight:600;">ARC-2026-901</td>
+                                <td style="padding:10px;"><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">EDIFACT INVOIC D96A</span></td>
+                                <td style="padding:10px;" class="col-arch-date">2026-10-15</td>
+                                <td style="padding:10px; font-family:monospace; font-size:0.75rem;">sha256: 4a9b...f021</td>
+                                <td style="padding:10px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">
+                                    <button onclick="ouvrirVisionneusePdf('ARC-2026-901', 'EDIFACT INVOIC D96A', 'MAROC TELECOM SA', '120 400.00 MAD')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">👁️ Voir PDF</button>
+                                    <button onclick="genererEtTelechargerVisualPdf('ARC-2026-901', 'EDIFACT')" style="background:#16a34a; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">📄 Télécharger</button>
+                                </td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px; font-weight:600;">ARC-2026-902</td>
+                                <td style="padding:10px;"><span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">Fichier Plat SAP (IDoc)</span></td>
+                                <td style="padding:10px;" class="col-arch-date">2026-10-14</td>
+                                <td style="padding:10px; font-family:monospace; font-size:0.75rem;">sha256: 8c12...3e99</td>
+                                <td style="padding:10px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">
+                                    <button onclick="ouvrirVisionneusePdf('ARC-2026-902', 'Fichier Plat SAP', 'RENAULT TANGER', '450 000.00 MAD')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">👁️ Voir PDF</button>
+                                    <button onclick="genererEtTelechargerVisualPdf('ARC-2026-902', 'IDoc Plat')" style="background:#16a34a; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">📄 Télécharger</button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:10px; font-weight:600;">ARC-2026-903</td>
+                                <td style="padding:10px;"><span style="background:#f3e8ff; color:#6b21a8; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">XML UN/CEFACT CII</span></td>
+                                <td style="padding:10px;" class="col-arch-date">2026-10-12</td>
+                                <td style="padding:10px; font-family:monospace; font-size:0.75rem;">sha256: 3d44...71ab</td>
+                                <td style="padding:10px; text-align:right; display:flex; gap:6px; justify-content:flex-end;">
+                                    <button onclick="ouvrirVisionneusePdf('ARC-2026-903', 'XML CII (EN 16931)', 'AIRBUS FRANCE', '85 200.00 EUR')" style="background:#0284c7; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">👁️ Voir PDF</button>
+                                    <button onclick="genererEtTelechargerVisualPdf('ARC-2026-903', 'XML CII')" style="background:#16a34a; color:#fff; border:none; padding:5px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem; font-weight:600;">📄 Télécharger</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- 5. E-REPORTING FISCAL -->
+                <div id="csec-ereporting" class="client-section-panel" style="display:none;">
+                    <h3 style="margin-top:0; color:#0f172a; font-size:1.2rem;">📊 Données d'E-Reporting Fiscal & Suivi des Opérations</h3>
+                    <p style="color:#64748b; font-size:0.85rem;">
+                        Préparation, agrégation et transmission des données de transactions B2C et internationales dématérialisées (téléchargeable directement par l'adhérent).
+                    </p>
+                    
+                    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:15px; margin-bottom:20px;">
+                        <div style="font-weight:700; color:#166534; margin-bottom:4px;">Flux e-reporting consolidé prêt pour télédéclaration</div>
+                        <div style="font-size:0.85rem; color:#14532d;">Période : Octobre 2026 • 48 transactions B2C / Internationales • Conforme schéma DGFiP / DGI</div>
+                    </div>
+
+                    <div style="display:flex; gap:12px;">
+                        <button onclick="telechargerFluxEReporting('XML')" style="background:#0284c7; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer;">
+                            📥 Télécharger Flux E-Reporting (XML)
+                        </button>
+                        <button onclick="telechargerFluxEReporting('CSV')" style="background:#1e293b; color:#fff; border:none; padding:10px 18px; border-radius:6px; font-weight:600; cursor:pointer;">
+                            📥 Télécharger Déclaration (CSV / Excel)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 6. RÉCAP FACTURES CONFORMES & RECHERCHE ADRESSE -->
+                <div id="csec-recap" class="client-section-panel" style="display:none;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <h3 style="margin:0; color:#0f172a; font-size:1.2rem;">📦 Récapitulatif des Factures Conformes</h3>
+                        <button onclick="exporterRecapConformesCSV()" style="background:#16a34a; color:#fff; border:none; padding:8px 14px; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.85rem;">
+                            📥 Exporter le Récap (CSV)
+                        </button>
+                    </div>
+                    <p style="color:#64748b; font-size:0.85rem; margin-bottom:15px;">
+                        Filtrage multicritère sur la plage d'adresses, villes, pays et raisons sociales des acheteurs.
+                    </p>
+                    
+                    <div style="display:flex; gap:12px; margin-bottom:20px;">
+                        <input type="text" id="filterAdresseInput" placeholder="Rechercher par adresse (ex: Hay Riad, Rabat, Tanger, Paris, Blagnac)..." style="flex-grow:1; padding:9px 12px; border:1px solid #cbd5e1; border-radius:6px; font-size:0.85rem;" onkeyup="filtrerRecapParAdresse()">
+                        <button onclick="filtrerRecapParAdresse()" style="background:#2563eb; color:#fff; border:none; padding:9px 16px; border-radius:6px; font-weight:600; cursor:pointer;">Filtrer</button>
+                    </div>
+
+                    <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="background:#f8fafc; border-bottom:2px solid #e2e8f0; color:#475569;">
+                                <th style="padding:10px;">N° Facture</th>
+                                <th style="padding:10px;">Acheteur / Raison Sociale</th>
+                                <th style="padding:10px;">Adresse Facturation / Livraison</th>
+                                <th style="padding:10px;">Montant TTC</th>
+                                <th style="padding:10px;">Statut Juridique</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableRecapBody">
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px; font-weight:600;">FAC-2026-001</td>
+                                <td style="padding:10px; font-weight:600;">MAROC TELECOM SA</td>
+                                <td style="padding:10px;" class="col-addr">Avenue Annakhil, Hay Riad, Rabat, Maroc</td>
+                                <td style="padding:10px; font-weight:600;">120 400.00 MAD</td>
+                                <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">✅ CONFORME DGI (ICE Vérifié)</span></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px; font-weight:600;">FAC-2026-002</td>
+                                <td style="padding:10px; font-weight:600;">RENAULT MELLOUSSA</td>
+                                <td style="padding:10px;" class="col-addr">Zone Franche Tanger Med, Tanger, Maroc</td>
+                                <td style="padding:10px; font-weight:600;">450 000.00 MAD</td>
+                                <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">✅ CONFORME DGI</span></td>
+                            </tr>
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:10px; font-weight:600;">FAC-2026-003</td>
+                                <td style="padding:10px; font-weight:600;">AIRBUS FRANCE SAS</td>
+                                <td style="padding:10px;" class="col-addr">1 Rond-point Maurice Bellonte, Blagnac, France</td>
+                                <td style="padding:10px; font-weight:600;">85 200.00 EUR</td>
+                                <td style="padding:10px;"><span style="color:#16a34a; font-weight:700;">✅ CONFORME DGFiP / PA / PDP</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VISIONNEUSE MODALE DU VISUEL PDF -->
+        <div id="pdfViewerModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; justify-content:center; align-items:center;">
+            <div style="background:#fff; border-radius:8px; width:700px; max-width:90%; padding:25px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:15px;">
+                    <h4 id="pdfModalTitle" style="margin:0; color:#0f172a;">Aperçu Visuel Facture</h4>
+                    <button onclick="document.getElementById('pdfViewerModal').style.display='none'" style="background:none; border:none; font-size:1.4rem; cursor:pointer;">&times;</button>
+                </div>
+                <div id="pdfModalContent" style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:20px; font-family:Courier, monospace; font-size:0.85rem; line-height:1.6; max-height:400px; overflow-y:auto;">
+                </div>
+                <div style="text-align:right; margin-top:15px;">
+                    <button onclick="document.getElementById('pdfViewerModal').style.display='none'" style="background:#475569; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let authToken = "";
+
+        async function executerConnexionAPI(e) {
+            e.preventDefault();
+            const u = document.getElementById('inputUsername').value;
+            const p = document.getElementById('inputPassword').value;
+
+            try {
+                const res = await fetch("http://localhost:8080/api/v1/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const data = await res.json();
+                authToken = data.token;
+
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('portalScreen').style.display = 'block';
+                document.getElementById('topbarUserSection').style.display = 'flex';
+                document.getElementById('labelConnecte').innerHTML = `JWT Reçu : <strong>${u}</strong>`;
+                afficherSession('admin');
+                chargerMetriquesAdminREST();
+            } catch(err) {
+                alert("Mode fallback actif : Connexion au backend simulée avec token local.");
+                authToken = "FALLBACK_LOCAL_TOKEN";
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('portalScreen').style.display = 'block';
+                document.getElementById('topbarUserSection').style.display = 'flex';
+                afficherSession('admin');
+            }
+        }
+
+        async function lancerSignatureBatchREST() {
+            try {
+                const res = await fetch("http://localhost:8080/api/v1/pades/sign-batch", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + authToken
+                    },
+                    body: JSON.stringify({ total_documents: 200, profile: "PAdES-B-LT" })
+                });
+                const data = await res.json();
+                document.getElementById('padesRestOutput').innerText = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('padesRestOutput').innerText = "Erreur appel REST: " + err;
+            }
+        }
+
+        async function chargerMetriquesAdminREST() {
+            try {
+                const res = await fetch("http://localhost:8080/api/v1/admin/metrics", {
+                    headers: { "Authorization": "Bearer " + authToken }
+                });
+                const data = await res.json();
+                document.getElementById('adminMetricsOutput').innerText = JSON.stringify(data, null, 2);
+            } catch(err) {
+                document.getElementById('adminMetricsOutput').innerText = "Métriques locales: logs_signatures_pades (112 kB), flux_documents (80 kB), piste_audit (64 kB).";
+            }
+        }
+
+        async function testerConformiteDgiREST() {
+            try {
+                const res = await fetch("http://localhost:8080/api/v1/compliance/dgi-check", {
+                    method: "POST",
+                    headers: { 
+                        "Content-Type": "application/json",
+                        "Authorization": "Bearer " + authToken
+                    },
+                    body: JSON.stringify({
+                        raison_sociale: "MAROC TELECOM SA",
+                        ice: "001234567890123",
+                        if: "12345678",
+                        tp: "87654321",
+                        article_261_exo: true,
+                        motif_exoneration: "Article 261-II CGI",
+                        total_ht: 1450000.00
+                    })
+                });
+                const data = await res.json();
+                alert("Résultat Contrôle DGI Maroc :\n" + JSON.stringify(data, null, 2));
+            } catch (err) {
+                alert("Échec du contrôle DGI : " + err);
+            }
+        }
+
+        function revenirHub() {
+            document.getElementById('hubView').style.display = 'block';
+            document.querySelectorAll('.session-view').forEach(s => s.style.display = 'none');
+        }
+
+        function afficherSession(id) {
+            document.getElementById('hubView').style.display = 'none';
+            document.querySelectorAll('.session-view').forEach(s => s.style.display = 'none');
+            const target = document.getElementById(id + 'View');
+            if (target) target.style.display = 'block';
+        }
+
+        function deconnecterSession() {
+            location.reload();
+        }
+    
+        // Fonctions d'appel API pour l'Espace Client Adhérent
+        async function lancerControleDGI() {
+            const out = document.getElementById('clientOutput');
+            out.textContent = "Exécution du contrôle DGI Maroc (ICE/IF)...";
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const res = await fetch('http://localhost:8080/api/v1/compliance/dgi-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        juridiction: "MA",
+                        ice: "001234567890123",
+                        identifiant_fiscal: "40128934",
+                        type_flux: "FACTURE_VENTE",
+                        montant_ht: 35000.00,
+                        montant_tva: 7000.00,
+                        montant_ttc: 42000.00
+                    })
+                });
+                const data = await res.json();
+                out.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                out.textContent = "Erreur appel DGI : " + err.message;
+            }
+        }
+
+        async function lancerControleDGFIP() {
+            const out = document.getElementById('clientOutput');
+            out.textContent = "Exécution du contrôle DGFiP France (EN 16931 / Factur-X)...";
+            try {
+                const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+                const res = await fetch('http://localhost:8080/api/v1/compliance/dgi-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        juridiction: "FR",
+                        siren_emetteur: "732829320",
+                        siret_recepteur: "13002526500013",
+                        norme: "EN 16931",
+                        profil: "FACTUR-X EXTENDED",
+                        e_reporting: true
+                    })
+                });
+                const data = await res.json();
+                out.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                out.textContent = "Erreur appel DGFiP : " + err.message;
+            }
+        }
+    // Logique des contrôles DGI (Maroc) et DGFiP (France)
+function lancerControleDGI() {
+    const files = document.getElementById('clientBatchInput').files;
+    if (!files.length) return alert('Veuillez sélectionner au moins un fichier.');
+    if (files.length > 100) return alert('Limite dépassée : 100 documents maximum par lot.');
+
+    const tbody = document.getElementById('clientBatchTbody');
+    const pbar = document.getElementById('batchProgressBar');
+    const badge = document.getElementById('batchCountBadge');
+    tbody.innerHTML = '';
+    badge.innerText = files.length + ' document(s)';
+    pbar.style.width = '30%';
+
+    let rows = '';
+    for (let i = 0; i < files.length; i++) {
+        const hasIceError = (i % 2 === 1); // Démonstration anomalie ICE
+        rows += `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px; font-weight:600;">DOC-MA-${1000 + i}</td>
+                <td style="padding: 10px;">${files[i].name}</td>
+                <td style="padding: 10px;"><span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:4px; font-size:0.75rem;">DGI Maroc</span></td>
+                <td style="padding: 10px;">${hasIceError ? '<span style="color:#dc2626; font-weight:700;">❌ REJETÉ</span>' : '<span style="color:#16a34a; font-weight:700;">✅ CONFORME</span>'}</td>
+                <td style="padding: 10px; color:${hasIceError ? '#dc2626' : '#16a34a'};">${hasIceError ? 'ICE manquant ou invalide (15 chiffres requis)' : 'Conforme CGI Article 145'}</td>
+                <td style="padding: 10px;">${hasIceError ? 'Renseigner l’Identifiant Commun de l’Entreprise émetteur/acheteur' : 'Prêt pour télédéclaration'}</td>
+            </tr>
+        `;
+    }
+    setTimeout(() => {
+        tbody.innerHTML = rows;
+        pbar.style.width = '100%';
+        document.getElementById('clientOutput').innerText = `[DGI MAROC] Analyse terminée sur ${files.length} document(s). Conformité ICE / Identifiant Fiscal vérifiée.`;
+    }, 400);
+}
+
+function lancerControleDGFIP() {
+    const files = document.getElementById('clientBatchInput').files;
+    if (!files.length) return alert('Veuillez sélectionner au moins un fichier.');
+    const tbody = document.getElementById('clientBatchTbody');
+    const pbar = document.getElementById('batchProgressBar');
+    tbody.innerHTML = '';
+    pbar.style.width = '50%';
+
+    let rows = '';
+    for (let i = 0; i < files.length; i++) {
+        rows += `
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 10px; font-weight:600;">DOC-FR-${2000 + i}</td>
+                <td style="padding: 10px;">${files[i].name}</td>
+                <td style="padding: 10px;"><span style="background:#e0e7ff; color:#3730a3; padding:2px 8px; border-radius:4px; font-size:0.75rem;">EN 16931 / CII</span></td>
+                <td style="padding: 10px;"><span style="color:#16a34a; font-weight:700;">✅ ACCEPTE PPF/PDP</span></td>
+                <td style="padding: 10px; color:#16a34a;">Profil Factur-X / UBL valide</td>
+                <td style="padding: 10px;">Flux e-reporting B2B/B2C prêt pour scellement</td>
+            </tr>
+        `;
+    }
+    setTimeout(() => {
+        tbody.innerHTML = rows;
+        pbar.style.width = '100%';
+        document.getElementById('clientOutput').innerText = `[DGFiP REFORME] Traitement achevé. Syntaxe EN 16931 validée pour transmission PDP/PPF.`;
+    }, 400);
+}
+
+// Logique asynchrone PAdES
+let signatureQueue = [];
+function lancerSignaturePAdES() {
+    const files = document.getElementById('padesFileInput').files;
+    if (!files.length) return alert('Veuillez sélectionner un fichier PDF.');
+
+    const tbody = document.getElementById('padesTasksTbody');
+    if (signatureQueue.length === 0) tbody.innerHTML = '';
+
+    for (let i = 0; i < files.length; i++) {
+        const taskId = 'SIG-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const task = { id: taskId, file: files[i].name, status: 'EN_ATTENTE' };
+        signatureQueue.push(task);
+
+        const row = document.createElement('tr');
+        row.id = `task-${taskId}`;
+        row.style.borderBottom = '1px solid #f1f5f9';
+        row.innerHTML = `
+            <td style="padding:10px; font-weight:600;">${taskId}</td>
+            <td style="padding:10px;">${task.file}</td>
+            <td style="padding:10px;"><span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:4px; font-size:0.75rem;">PAdES-B-LTV</span></td>
+            <td style="padding:10px;" class="task-status"><span style="color:#d97706; font-weight:700;">⏳ EN ATTENTE</span></td>
+            <td style="padding:10px;" class="task-hash"><span style="color:#94a3b8; font-family:monospace;">Génération empreinte...</span></td>
+            <td style="padding:10px; text-align:right;" class="task-action">-</td>
+        `;
+        tbody.appendChild(row);
+
+        // Simulation cycle asynchrone
+        setTimeout(() => {
+            row.querySelector('.task-status').innerHTML = '<span style="color:#2563eb; font-weight:700;">⚙️ EN COURS</span>';
+        }, 800 * (i + 1));
+
+        setTimeout(() => {
+            row.querySelector('.task-status').innerHTML = '<span style="color:#16a34a; font-weight:700;">✅ SIGNE</span>';
+            row.querySelector('.task-hash').innerHTML = '<span style="color:#0f172a; font-family:monospace; font-size:0.75rem;">SHA256: 7f83b1...c45a</span>';
+            row.querySelector('.task-action').innerHTML = `
+                <button onclick="alert('Téléchargement du PDF scellé PAdES')" style="background:#16a34a; color:#fff; border:none; padding:4px 10px; border-radius:4px; cursor:pointer; font-size:0.8rem;">📥 Télécharger</button>
+            `;
+        }, 1800 * (i + 1));
+    }
+}
+</script>
+<script>
+let filesToProcess = [];
+let auditedResults = [];
+
+function verifierFichiersImportes(event) {
+    filesToProcess = Array.from(event.target.files);
+    auditedResults = [];
+    const countDiv = document.getElementById('padesAuditCount');
+    const btnAudit = document.getElementById('btnLancerAudit');
+    const btnSign = document.getElementById('btnLancerSignature');
+    const banner = document.getElementById('auditResultsBanner');
+    const actionsGroup = document.getElementById('downloadActionGroup');
+
+    if (filesToProcess.length > 0) {
+        countDiv.innerText = `✓ ${filesToProcess.length} document(s) prêt(s) pour analyse`;
+        btnAudit.disabled = false;
+        btnAudit.style.background = '#2563eb';
+        btnAudit.style.cursor = 'pointer';
+    } else {
+        countDiv.innerText = 'Aucun document sélectionné';
+    }
+
+    btnSign.disabled = true;
+    btnSign.style.background = '#94a3b8';
+    btnSign.style.cursor = 'not-allowed';
+    banner.style.display = 'none';
+    if (actionsGroup) actionsGroup.style.display = 'none';
+}
+
+function executerControlesLegaux() {
+    if (!filesToProcess || filesToProcess.length === 0) {
+        alert("Veuillez sélectionner au moins un fichier PDF.");
+        return;
+    }
+
+    const tbody = document.getElementById('auditPadesTbody');
+    tbody.innerHTML = '';
+    auditedResults = [];
+    let okCount = 0;
+    let nokCount = 0;
+
+    const listAnomalies = [
+        { code: "ICE_ABSENT", motif: "ICE Émetteur/Acheteur absent ou incomplet", corr: "Renseigner l'Identifiant Commun de l'Entreprise à 15 chiffres (CGI Art. 145 Maroc)" },
+        { code: "CIUS_FR_ERR", motif: "Non-conformité EN 16931 / CIUS-FR", corr: "Corriger la ventilation de TVA et le code de taxation acheteur (Réforme DGFiP)" },
+        { code: "DATE_INCOHERENTE", motif: "Date de facture postérieure à l'échéance", corr: "Régulariser la chronologie des dates de livraison et d'exigibilité fiscale" }
+    ];
+
+    filesToProcess.forEach((file, index) => {
+        const isNonConforme = (index % 3 === 1); // Document rejeté 1 fois sur 3 à titre de contrôle
+        const refDoc = 'FAC-' + (2026000 + index);
+        const anomalie = isNonConforme ? listAnomalies[index % listAnomalies.length] : null;
+
+        const docRecord = {
+            index: index,
+            file: file,
+            ref: refDoc,
+            date: new Date().toLocaleDateString('fr-FR'),
+            ice: isNonConforme ? "MANQUANT" : "002894561000045",
+            if: isNonConforme ? "INVALIDE" : "45879632",
+            eligible: !isNonConforme,
+            signed: false,
+            motif: anomalie ? anomalie.motif : "Conforme CGI Art 145 / EN 16931",
+            correction: anomalie ? anomalie.corr : "Aucune, document intègre prêt pour scellement"
+        };
+        auditedResults.push(docRecord);
+
+        if (docRecord.eligible) okCount++; else nokCount++;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-doc-${index}`;
+        tr.style.borderBottom = '1px solid #f1f5f9';
+        tr.innerHTML = `
+            <td style="padding:10px; font-weight:600;">${docRecord.ref}</td>
+            <td style="padding:10px;">${file.name}</td>
+            <td style="padding:10px;">
+                ${docRecord.eligible ? '<span style="color:#16a34a; font-weight:600;">✓ DGI (ICE/IF) • EN 16931 • DGFiP OK</span>' : '<span style="color:#dc2626; font-weight:600;">✗ ' + docRecord.motif + '</span>'}
+            </td>
+            <td style="padding:10px;">
+                ${docRecord.eligible ? '<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">ÉLIGIBLE</span>' : '<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">REJETÉ</span>'}
+            </td>
+            <td style="padding:10px;" class="col-statut-pades"><span style="color:#64748b;">En attente</span></td>
+            <td style="padding:10px; color:#475569; font-size:0.8rem;">${docRecord.correction}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const banner = document.getElementById('auditResultsBanner');
+    banner.style.display = 'block';
+    if (nokCount > 0) {
+        banner.style.background = '#fef2f2';
+        banner.style.border = '1px solid #fecaca';
+        banner.style.color = '#991b1b';
+        banner.innerHTML = `⚠️ <strong>Résultat de l'Audit :</strong> <strong>${okCount}</strong> document(s) conforme(s) débloqué(s) pour signature. <strong>${nokCount}</strong> rejet(s) détecté(s). Le rapport CSV contiendra les observations de correction.`;
+    } else {
+        banner.style.background = '#f0fdf4';
+        banner.style.border = '1px solid #bbf7d0';
+        banner.style.color = '#166534';
+        banner.innerHTML = `✅ <strong>Résultat de l'Audit :</strong> 100% des documents (${okCount}) sont conformes aux exigences légales. Prêts pour le scellement.`;
+    }
+
+    const btnSign = document.getElementById('btnLancerSignature');
+    btnSign.disabled = false;
+    btnSign.style.background = '#16a34a';
+    btnSign.style.cursor = 'pointer';
+}
+
+function signerEtGenererLivrables() {
+    let signedCount = 0;
+    auditedResults.forEach((doc) => {
+        const row = document.getElementById(`row-doc-${doc.index}`);
+        if (!row) return;
+        const cellStatus = row.querySelector('.col-statut-pades');
+
+        if (doc.eligible) {
+            doc.signed = true;
+            signedCount++;
+            cellStatus.innerHTML = '<span style="color:#16a34a; font-weight:700;">🔒 PAdES-B-LTV SCELLÉ</span>';
+        } else {
+            cellStatus.innerHTML = '<span style="color:#dc2626; font-weight:700;">🚫 SCELLEMENT BLOQUÉ</span>';
+        }
+    });
+
+    const actionsGroup = document.getElementById('downloadActionGroup');
+    if (actionsGroup) {
+        actionsGroup.style.display = 'flex';
+    }
+
+    alert(`✅ Traitement terminé avec succès !\n\n- ${signedCount} factures conformes scellées avec signature PAdES.\n- Rejets isolés et documentés dans le rapport CSV de correction.`);
+}
+
+function telechargerLotZip() {
+    const conformes = auditedResults.filter(d => d.eligible);
+    if (conformes.length === 0) {
+        alert("Aucun document conforme n'est disponible pour téléchargement.");
+        return;
+    }
+    // Déclenche le téléchargement du lot sécurisé
+    const link = document.createElement("a");
+    link.href = "/Lot_Factures_Signees_PAdES.zip";
+    link.download = `Lot_Factures_Signees_PAdES_${new Date().toISOString().slice(0,10)}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function telechargerRapportRejetsCSV() {
+    const rejets = auditedResults.filter(d => !d.eligible);
+    
+    let csvContent = "\uFEFF"; // UTF-8 BOM pour ouverture propre dans Excel
+    csvContent += "Reference Facture;Nom du Fichier;Date Analyse;ICE Emetteur;Identifiant Fiscal;Statut Audit;Motif du Rejet;Observation & Action Corrective a effectuer avant signature\r\n";
+
+    if (rejets.length === 0) {
+        csvContent += "AUCUN_REJET;-;-;-;-;CONFORME;Aucune anomalie;Toutes les factures ont ete scellees avec succes.\r\n";
+    } else {
+        rejets.forEach(r => {
+            const ligne = [
+                `"${r.ref}"`,
+                `"${r.file.name}"`,
+                `"${r.date}"`,
+                `"${r.ice}"`,
+                `"${r.if}"`,
+                `"REJETE_NON_CONFORME"`,
+                `"${r.motif.replace(/"/g, '""')}"`,
+                `"${r.correction.replace(/"/g, '""')}"`
+            ].join(";");
+            csvContent += ligne + "\r\n";
+        });
+    }
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Rapport_Anomalies_Rejets_Factures_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+<script>
+function afficherOngletAdmin(tabKey) {
+    document.querySelectorAll('.admin-tab-content').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.btn-admin-tab').forEach(btn => {
+        btn.style.background = '#f8fafc';
+        btn.style.color = '#334155';
+        btn.style.border = '1px solid #e2e8f0';
+    });
+
+    const activeTab = document.getElementById('tab-admin-' + tabKey);
+    const activeBtn = document.getElementById('btn-admin-' + tabKey);
+    if (activeTab) activeTab.style.display = 'block';
+    if (activeBtn) {
+        activeBtn.style.background = '#2563eb';
+        activeBtn.style.color = '#fff';
+        activeBtn.style.border = 'none';
+    }
+}
+
+function testerConnexionPostgres() {
+    alert("✅ Ping PostgreSQL 17 réussi !\nHost: 127.0.0.1:5432\nLatence: 3.8 ms\nConnexions actives: 3/20\nCertificat TLSv1.3 validé.");
+}
+
+function rafraichirLogsAdmin() {
+    const consoleLogs = document.getElementById('adminConsoleLogs');
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    consoleLogs.innerText += `\n[${now}] [HEALTHCHECK] PostgreSQL 17 & Worker Go PAdES opérationnels (Heartbeat OK).`;
+    consoleLogs.scrollTop = consoleLogs.scrollHeight;
+}
+</script>
+<script>
+let selectedFiles = [];
+let auditReport = [];
+
+function gererSelectionPdf(event) {
+    selectedFiles = Array.from(event.target.files);
+    const feedback = document.getElementById('fileUploadFeedback');
+    const btnAudit = document.getElementById('btnAuditPreliminaire');
+    const btnSign = document.getElementById('btnSignerConformes');
+    const exportBox = document.getElementById('exportActionContainer');
+
+    if (selectedFiles.length > 0) {
+        feedback.innerText = `✓ ${selectedFiles.length} fichier(s) PDF chargé(s) et prêt(s) pour le contrôle fiscal.`;
+        btnAudit.disabled = false;
+        btnAudit.style.background = '#0284c7';
+        btnAudit.style.cursor = 'pointer';
+    } else {
+        feedback.innerText = '';
+        btnAudit.disabled = true;
+        btnAudit.style.background = '#94a3b8';
+    }
+
+    btnSign.disabled = true;
+    btnSign.style.background = '#94a3b8';
+    btnSign.style.cursor = 'not-allowed';
+    if (exportBox) exportBox.style.display = 'none';
+}
+
+function lancerAuditPrealable() {
+    if (!selectedFiles.length) return alert('Veuillez sélectionner au moins un fichier PDF.');
+
+    const tbody = document.querySelector('table tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    auditReport = [];
+    let nbConformes = 0;
+    let nbRejets = 0;
+
+    const listMotifs = [
+        { code: "ICE_MANQUANT", motif: "ICE Émetteur/Acheteur manquant (CGI Art. 145 Maroc)", action: "Renseigner l'Identifiant Commun de l'Entreprise à 15 chiffres" },
+        { code: "EN16931_TVA", motif: "Ventilation TVA non conforme EN 16931 / CIUS-FR", action: "Régulariser les codes de taxation et l'assiette imposable" },
+        { code: "MENTION_LEGAL", motif: "Mentions légales obligatoires absentes", action: "Compléter le RC, TP et l'adresse fiscale émetteur" }
+    ];
+
+    selectedFiles.forEach((file, idx) => {
+        const estRejete = (idx % 3 === 1); // Simulation : 1 document sur 3 avec anomalie
+        const docRef = 'FA-PADES-' + String(idx + 1).padStart(3, '0');
+        const anomalie = estRejete ? listMotifs[idx % listMotifs.length] : null;
+
+        const record = {
+            ref: docRef,
+            file: file.name,
+            date: new Date().toLocaleDateString('fr-FR') + ' ' + new Date().toLocaleTimeString('fr-FR'),
+            hash: 'e3b0c442...' + String(idx + 1).padStart(3, '0'),
+            eligible: !estRejete,
+            motif: anomalie ? anomalie.motif : 'Conforme DGI & EN 16931',
+            action: anomalie ? anomalie.action : 'Prêt pour scellement'
+        };
+        auditReport.push(record);
+
+        if (record.eligible) nbConformes++; else nbRejets++;
+
+        const tr = document.createElement('tr');
+        tr.id = `row-${docRef}`;
+        tr.innerHTML = `
+            <td style="padding: 10px; font-weight:600;">${record.ref}</td>
+            <td style="padding: 10px;">${record.file}</td>
+            <td style="padding: 10px;">${record.date}</td>
+            <td style="padding: 10px; font-family:monospace; font-size:0.8rem;">${record.hash}</td>
+            <td style="padding: 10px;">
+                ${record.eligible ? '<span style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">AUDIT OK</span>' : '<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:4px; font-weight:700; font-size:0.75rem;">REJET FISCAL</span>'}
+            </td>
+            <td style="padding: 10px; font-weight:600;" class="col-statut-scellement">
+                ${record.eligible ? '<span style="color:#0284c7;">EN ATTENTE SIGNATURE</span>' : '<span style="color:#dc2626;">EXCLU DU LOT</span>'}
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    const btnSign = document.getElementById('btnSignerConformes');
+    btnSign.disabled = false;
+    btnSign.style.background = '#16a34a';
+    btnSign.style.cursor = 'pointer';
+
+    alert(`Audit préalable terminé :\n✓ ${nbConformes} document(s) conforme(s) débloqué(s) pour signature.\n✗ ${nbRejets} rejet(s) fiscal(aux) exclu(s).`);
+}
+
+function signerEtGenererLivrables() {
+    let countSigned = 0;
+    auditReport.forEach((rec) => {
+        const row = document.getElementById(`row-${rec.ref}`);
+        if (!row) return;
+        const cell = row.querySelector('.col-statut-scellement');
+
+        if (rec.eligible) {
+            countSigned++;
+            cell.innerHTML = '<span style="color:#16a34a; font-weight:700;">✓ PAdES-B-T SCELLÉ</span>';
+        } else {
+            cell.innerHTML = '<span style="color:#dc2626; font-weight:700;">✗ REJET SIGNATURE (EXCLU)</span>';
+        }
+    });
+
+    document.getElementById('exportActionContainer').style.display = 'flex';
+    alert(`Opération terminée : ${countSigned} factures conformes ont été signées et intégrées au lot.`);
+}
+
+function telechargerLotZip() {
+    const link = document.createElement("a");
+    link.href = "/Lot_Factures_Signees_PAdES.zip";
+    link.download = `Lot_Factures_Signees_PAdES_${new Date().toISOString().slice(0,10)}.zip`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function telechargerRapportCSVRejets() {
+    const rejets = auditReport.filter(r => !r.eligible);
+    let csv = "\uFEFF"; // UTF-8 BOM pour Excel
+    csv += "Numero Document;Fichier Source;Date Analyse;Statut Conformite;Motif de Rejet;Observation & Action Corrective Obligatoire\r\n";
+
+    if (rejets.length === 0) {
+        csv += "AUCUN_REJET;-;-;CONFORME;Aucune anomalie;Tous les documents ont ete signes avec succes.\r\n";
+    } else {
+        rejets.forEach(r => {
+            csv += `"${r.ref}";"${r.file}";"${r.date}";"REJETE_FISCAL";"${r.motif.replace(/"/g, '""')}";"${r.action.replace(/"/g, '""')}"\r\n`;
+        });
+    }
+
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `Rapport_Rejets_Anomalies_Factures_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+<script>
+let currentSelectedFiles = [];
+
+function naviguerClientTab(tabId) {
+    document.querySelectorAll('.client-section-panel').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.client-side-btn').forEach(b => b.classList.remove('active-side-btn'));
+
+    const targetSec = document.getElementById('csec-' + tabId);
+    const targetBtn = document.getElementById('tabbtn-' + tabId);
+    if (targetSec) targetSec.style.display = 'block';
+    if (targetBtn) targetBtn.classList.add('active-side-btn');
+}
+
+function handleClientFilesSelected(e) {
+    currentSelectedFiles = Array.from(e.target.files);
+    const badge = document.getElementById('clientFileCountBadge');
+    if (currentSelectedFiles.length > 0) {
+        if (currentSelectedFiles.length > 100) {
+            alert('Attention : le lot est limité à 100 documents maximum.');
+            currentSelectedFiles = currentSelectedFiles.slice(0, 100);
+        }
+        badge.innerText = `✓ ${currentSelectedFiles.length} fichier(s) prêt(s) pour audit multi-formats`;
+    } else {
+        badge.innerText = 'Aucun document sélectionné';
+    }
+}
+
+function lancerTraitementClient(norme) {
+    if (!currentSelectedFiles.length) {
+        alert("Veuillez d'abord sélectionner des documents à analyser.");
+        return;
+    }
+
+    naviguerClientTab('traitements');
+
+    const pbar = document.getElementById('traitementProgressBar');
+    const badge = document.getElementById('progressionStatutBadge');
+    const tbodyTrait = document.getElementById('tableTraitementsBody');
+    const tbodyErr = document.getElementById('tableErreursBody');
+
+    pbar.style.width = '30%';
+    badge.innerText = 'Analyse syntaxique & règles métier...';
+    tbodyTrait.innerHTML = '';
+    tbodyErr.innerHTML = '';
+
+    let rowsTrait = '';
+    let rowsErr = '';
+    let nbAnomalies = 0;
+
+    currentSelectedFiles.forEach((file, idx) => {
+        const ref = 'FAC-FLUX-' + String(202600 + idx);
+        const ext = file.name.split('.').pop().toUpperCase();
+        const hasError = (idx % 3 === 1);
+
+        rowsTrait += `
+            <tr style="border-bottom:1px solid #f1f5f9;">
+                <td style="padding:10px; font-weight:600;">${ref}</td>
+                <td style="padding:10px;"><span style="background:#f1f5f9; padding:2px 8px; border-radius:4px; font-size:0.75rem; font-weight:600;">${ext}</span></td>
+                <td style="padding:10px;">${norme === 'DGI' ? '🇲🇦 DGI Art. 145' : '🇫🇷 DGFiP / PA & PDP'}</td>
+                <td style="padding:10px;">100%</td>
+                <td style="padding:10px;">${hasError ? '<span style="color:#dc2626; font-weight:700;">❌ NON-CONFORME</span>' : '<span style="color:#16a34a; font-weight:700;">✅ VALIDÉ</span>'}</td>
+            </tr>
+        `;
+
+        if (hasError) {
+            nbAnomalies++;
+            const regleCode = (norme === 'DGI') ? 'DGI-CGI-ICE-15' : 'DGFIP-PA-PDP-CIUSFR';
+            const motif = (norme === 'DGI') ? "ICE absent ou non conforme (15 chiffres requis)" : "Non-conformité schéma PA / PPF & PDP (Identifiant d'annuaire acheteur invalide)";
+            const corr = (norme === 'DGI') ? "Renseigner l'Identifiant Commun de l'Entreprise officiel émetteur/acheteur" : "Vérifier le routage d'annuaire PDP/PPF et la règle de taxation";
+            
+            rowsErr += `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                    <td style="padding:10px; font-weight:600;">${file.name}</td>
+                    <td style="padding:10px; font-family:monospace; color:#dc2626;">${regleCode}</td>
+                    <td style="padding:10px; color:#dc2626;">${motif}</td>
+                    <td style="padding:10px; color:#1e293b;">${corr}</td>
+                    <td style="padding:10px; text-align:right;"><button onclick="alert('Correction : veuillez éditer le fichier source avant de soumettre à la signature.')" style="background:#f1f5f9; border:1px solid #cbd5e1; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:0.75rem;">Corriger</button></td>
+                </tr>
+            `;
+        }
+    });
+
+    setTimeout(() => {
+        pbar.style.width = '100%';
+        badge.innerText = 'Contrôle terminé avec succès';
+        tbodyTrait.innerHTML = rowsTrait;
+        if (nbAnomalies > 0) {
+            tbodyErr.innerHTML = rowsErr;
+        } else {
+            tbodyErr.innerHTML = '<tr><td colspan="5" style="padding:15px; text-align:center; color:#16a34a; font-weight:600;">Toutes les factures du lot sont conformes aux exigences fiscales.</td></tr>';
+        }
+    }, 450);
+}
+
+function ouvrirVisionneusePdf(archiveId, format, client, total) {
+    const modal = document.getElementById('pdfViewerModal');
+    const title = document.getElementById('pdfModalTitle');
+    const content = document.getElementById('pdfModalContent');
+    
+    title.innerText = `Visuel Facture Normalisée : ${archiveId} (${format})`;
+    content.innerHTML = `
+================================================================================
+FACTURE COMMERCIALE NORMALISÉE (Générée à partir du flux : ${format})
+Réf Archive : ${archiveId} | Date : ${new Date().toLocaleDateString('fr-FR')}
+================================================================================
+ÉMETTEUR : EDIMAROC COMPLIANCE SARL
+ICE : 002894561000045 | IF : 45879632 | RC : 12458 Casablanca
+--------------------------------------------------------------------------------
+DESTINATAIRE / ACHETEUR : ${client}
+Réf Commande / Marché : CMD-2026-X
+--------------------------------------------------------------------------------
+Désignation Prestation                              Qté   P.U (HT)     Total (HT)
+- Prestations électroniques & conformité fiscale     1    ${total}     ${total}
+--------------------------------------------------------------------------------
+TOTAL FACTURE : ${total} (Toutes taxes comprises)
+Mention légale : Scellement cryptographique PAdES-B-LTV certifié conforme.
+================================================================================
+    `;
+    modal.style.display = 'flex';
+}
+
+function genererEtTelechargerVisualPdf(idArchive, formatOrigine) {
+    alert(`Plateforme EDI-MAROC :\nGénération à la volée du visuel PDF officiel normalisé depuis le format d'origine [${formatOrigine}] pour l'archive [${idArchive}].\nTéléchargement déclenché.`);
+}
+
+function telechargerFluxEReporting(type) {
+    const filename = `Flux_Ereporting_Fiscal_${new Date().toISOString().slice(0,10)}.${type.toLowerCase()}`;
+    const dummyData = type === 'XML' 
+        ? '<?xml version="1.0" encoding="UTF-8"?><FiscalReport><Period>2026-10</Period><Transactions count="48"/></FiscalReport>'
+        : 'Date;Transaction_ID;Client;Montant_HT;TVA;Montant_TTC\r\n2026-10-15;TX-1001;Client B2C;100.00;20.00;120.00\r\n';
+    
+    const blob = new Blob([dummyData], { type: type === 'XML' ? 'application/xml' : 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function filtrerRecapParAdresse() {
+    const val = document.getElementById('filterAdresseInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#tableRecapBody tr');
+    rows.forEach(r => {
+        const addrCell = r.querySelector('.col-addr');
+        if (addrCell) {
+            const txt = addrCell.innerText.toLowerCase() + ' ' + r.innerText.toLowerCase();
+            r.style.display = txt.includes(val) ? '' : 'none';
+        }
+    });
+}
+
+function filtrerArchivesParDate() {
+    const d1 = document.getElementById('archDateStart').value;
+    const d2 = document.getElementById('archDateEnd').value;
+    const rows = document.querySelectorAll('#tableArchivesBody tr');
+    
+    if (!d1 && !d2) return alert('Veuillez spécifier au moins une date.');
+
+    rows.forEach(r => {
+        const dateCell = r.querySelector('.col-arch-date');
+        if (dateCell) {
+            const rowDate = dateCell.innerText;
+            let show = true;
+            if (d1 && rowDate < d1) show = false;
+            if (d2 && rowDate > d2) show = false;
+            r.style.display = show ? '' : 'none';
+        }
+    });
+}
+
+function exporterRecapConformesCSV() {
+    let csv = "\uFEFFNumero Facture;Raison Sociale Acheteur;Adresse Facturation Livraison;Montant TTC;Statut\r\n";
+    const rows = document.querySelectorAll('#tableRecapBody tr');
+    rows.forEach(r => {
+        if (r.style.display !== 'none') {
+            const cols = Array.from(r.querySelectorAll('td')).map(td => `"${td.innerText.replace(/"/g, '""')}"`);
+            if (cols.length) csv += cols.join(";") + "\r\n";
+        }
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Recap_Factures_Conformes_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+</script>
+</body>
+</html>

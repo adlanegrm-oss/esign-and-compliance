@@ -1,0 +1,39 @@
+﻿
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: edimaroc_postgres17
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: .
+    container_name: edimaroc_backend_go
+    environment:
+      DATABASE_URL: "host=db port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
+      PORT: "8080"
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+
+  proxy:
+    image: nginx:alpine
+    container_name: edimaroc_nginx_proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./portal.html:/usr/share/nginx/html/index.html:ro
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
