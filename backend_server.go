@@ -1,4 +1,4 @@
-
+﻿
 package main
 
 import (
@@ -128,7 +128,7 @@ func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
 
 	if input.Role != "ADMIN" && input.Role != "ADHERENT" {
 		writeJSON(w, http.StatusBadRequest,
-			map[string]string{"error": "role doit être ADMIN ou ADHERENT"})
+			map[string]string{"error": "role doit Ãªtre ADMIN ou ADHERENT"})
 		return
 	}
 
@@ -148,13 +148,13 @@ func (a *App) createUser(w http.ResponseWriter, r *http.Request) {
 		var stateError interface{ SQLState() string }
 		if errors.As(err, &stateError) && stateError.SQLState() == "23505" {
 			writeJSON(w, http.StatusConflict,
-				map[string]string{"error": "username ou email déjà utilisé"})
+				map[string]string{"error": "username ou email dÃ©jÃ  utilisÃ©"})
 			return
 		}
 
-		log.Printf("Erreur création utilisateur : %v", err)
+		log.Printf("Erreur crÃ©ation utilisateur : %v", err)
 		writeJSON(w, http.StatusInternalServerError,
-			map[string]string{"error": "Impossible de créer l'utilisateur"})
+			map[string]string{"error": "Impossible de crÃ©er l'utilisateur"})
 		return
 	}
 
@@ -192,12 +192,12 @@ func initializeDatabase(db *sql.DB) error {
 func main() {
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		log.Fatal("DATABASE_URL absent : démarrage refusé")
+		log.Fatal("DATABASE_URL absent : dÃ©marrage refusÃ©")
 	}
 
 	token := os.Getenv("ADMIN_API_TOKEN")
 	if token == "" {
-		log.Fatal("ADMIN_API_TOKEN absent : démarrage refusé")
+		log.Fatal("ADMIN_API_TOKEN absent : dÃ©marrage refusÃ©")
 	}
 
 	db, err := sql.Open("pgx", dsn)
@@ -238,7 +238,7 @@ func main() {
 
 	mux.HandleFunc("GET /api/v1/users", app.authenticate(app.listUsers))
 	mux.HandleFunc("POST /api/v1/users", app.authenticate(app.createUser))
-	mux.HandleFunc("GET /api/v1/admin/metrics", app.metrics)
+	mux.HandleFunc("GET /api/v1/admin/metrics", app.authenticate(app.metrics))
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -251,6 +251,7 @@ func main() {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	log.Printf("Serveur démarré sur le port %s", port)
+	log.Printf("Serveur dÃ©marrÃ© sur le port %s", port)
 	log.Fatal(server.ListenAndServe())
 }
+
