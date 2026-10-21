@@ -1,0 +1,7 @@
+services:
+  db:
+    environment:
+      APP_DB_USER: "${APP_DB_USER:?APP_DB_USER requis}"
+      APP_DB_PASSWORD: "${APP_DB_PASSWORD:?APP_DB_PASSWORD requis}"
+    volumes:
+      - ./db/init/10-create-app-role.sh:/docker-entrypoint-initdb.d/10-create-app-role.sh:ro
