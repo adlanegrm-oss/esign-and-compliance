@@ -1,0 +1,21 @@
+/dev-cert.pem
+/dev-key.pem
+/invoice-sample.pdf
+/invoice-signed.pdf
+/tampered.pdf
+
+# Clés privées et certificats de développement
+/dev-key.pem
+/dev-cert.pem
+*.key
+*.p12
+*.pfx
+
+# PDF générés pour la démonstration
+/invoice-sample.pdf
+/invoice-signed.pdf
+/invoice-signed-tampered.pdf
+/tampered.pdf
+
+# Sauvegardes et fichiers temporaires
+*.bak
